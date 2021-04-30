@@ -302,12 +302,8 @@ func (t *winTray) wndProc(hWnd windows.Handle, message uint32, wParam, lParam ui
 		WM_ENDSESSION = 0x0016
 		WM_CLOSE      = 0x0010
 		WM_DESTROY    = 0x0002
-		WM_CREATE     = 0x0001
 	)
 	switch message {
-	case WM_CREATE:
-		t.initialized.Set()
-		systrayReady()
 	case WM_COMMAND:
 		menuItemId := int32(wParam)
 		// https://docs.microsoft.com/en-us/windows/win32/menurc/wm-command#menus
@@ -873,6 +869,8 @@ func registerSystray() {
 		return
 	}
 
+	wt.initialized.Set()
+	systrayReady()
 }
 
 var m = &struct {
