@@ -1,8 +1,12 @@
+# Systray
+
 systray is a cross-platform Go library to place an icon and menu in the notification area.
+This repository is a fork of [getlantern/systray](https://github.com/getlantern/systray)
+removing the GTK dependency and support for legacy linux system tray.
 
 ## Features
 
-* Supported on Windows, macOS, and Linux
+* Supported on Windows, macOS (cgo-free Linux is a work in progress)
 * Menu items can be checked and/or disabled
 * Methods may be called from any Goroutine
 
@@ -28,15 +32,15 @@ func onExit() {
 }
 ```
 
-See [full API](https://pkg.go.dev/github.com/getlantern/systray?tab=doc) as well as [CHANGELOG](https://github.com/getlantern/systray/tree/master/CHANGELOG.md).
+See [full API](https://pkg.go.dev/github.com/fyne-io/systray?tab=doc) as well as [CHANGELOG](https://github.com/fyne-io/systray/tree/master/CHANGELOG.md).
 
 ## Try the example app!
 
 Have go v1.12+ or higher installed? Here's an example to get started on macOS:
 
 ```sh
-git clone https://github.com/getlantern/systray
-cd example
+git clone https://github.com/fyne-io/systray
+cd systray/example
 env GO111MODULE=on go build
 ./example
 ```
@@ -52,7 +56,7 @@ The following text will then appear on the console:
 
 ```sh
 go: finding github.com/skratchdot/open-golang latest
-go: finding github.com/getlantern/systray latest
+go: finding github.com/fyne-io/systray latest
 go: finding github.com/getlantern/golog latest
 ```
 
@@ -60,27 +64,15 @@ Now look for *Awesome App* in your menu bar!
 
 ![Awesome App screenshot](example/screenshot.png)
 
-## The Webview example
-
-The code under `webview_example` is to demostrate how it can co-exist with other UI elements. Note that the example doesn't work on macOS versions older than 10.15 Catalina.
-
 ## Platform notes
 
 ### Linux
 
-* Building apps requires gcc as well as the `gtk3` and `libappindicator3` development headers to be installed. For Debian or Ubuntu, you may install these using:
-
-```sh
-sudo apt-get install gcc libgtk-3-dev libappindicator3-dev
-```
-
-On Linux Mint, `libxapp-dev` is also required .
-
-To build `webview_example`, you also need to install `libwebkit2gtk-4.0-dev` and remove `webview_example/rsrc.syso` which is required on Windows.
+> This is a work in progress and currently broken / non-functionali
 
 ### Windows
 
-* To avoid opening a console at application startup, use these compile flags:
+* To avoid opening a console at application startup, use "fyne package" for your app or manually use these compile flags:
 
 ```sh
 go build -ldflags -H=windowsgui
@@ -88,7 +80,7 @@ go build -ldflags -H=windowsgui
 
 ### macOS
 
-On macOS, you will need to create an application bundle to wrap the binary; simply folders with the following minimal structure and assets:
+On macOS, you will need to create an application bundle to wrap the binary; simply use "fyne package" or add folders with the following minimal structure and assets:
 
 ```
 SystrayApp.app/
