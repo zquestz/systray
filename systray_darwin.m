@@ -210,9 +210,19 @@ NSMenuItem *find_menu_item(NSMenu *ourMenu, NSNumber *menuId) {
 
 @end
 
+bool internalLoop = false;
+void setInternalLoop(bool i) {
+	internalLoop = i;
+}
+
 void registerSystray(void) {
+  if !internalLoop { // with an external loop we don't take ownership of the app
+    return;
+  }
+
   AppDelegate *delegate = [[AppDelegate alloc] init];
   [[NSApplication sharedApplication] setDelegate:delegate];
+
   // A workaround to avoid crashing on macOS versions before Catalina. Somehow
   // SIGSEGV would happen inside AppKit if [NSApp run] is called from a
   // different function, even if that function is called right after this.
@@ -221,11 +231,24 @@ void registerSystray(void) {
   }
 }
 
+void nativeEnd(void) {
+  systray_on_exit();
+}
+
 int nativeLoop(void) {
   if (floor(NSAppKitVersionNumber) > /*NSAppKitVersionNumber10_14*/ 1671){
     [NSApp run];
   }
   return EXIT_SUCCESS;
+}
+
+void nativeStart(void) {
+  AppDelegate *delegate = [[AppDelegate alloc] init];
+  [delegate applicationDidFinishLaunching:NULL];
+}
+
+void nativeTick(void) {
+  // no-op as mac has no loop requirement
 }
 
 void runInMainThread(SEL method, id object) {

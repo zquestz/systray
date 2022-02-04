@@ -4,7 +4,10 @@ extern void systray_ready();
 extern void systray_on_exit();
 extern void systray_menu_item_selected(int menu_id);
 void registerSystray(void);
+void nativeEnd(void);
 int nativeLoop(void);
+void nativeStart(void);
+void nativeTick(void);
 
 void setIcon(const char* iconBytes, int length, bool template);
 void setMenuItemIcon(const char* iconBytes, int length, int menuId, bool template);

@@ -6,7 +6,10 @@ package systray
 #cgo darwin CFLAGS: -DDARWIN -x objective-c -fobjc-arc
 #cgo darwin LDFLAGS: -framework Cocoa
 
+#include <stdbool.h>
 #include "systray.h"
+
+void setInternalLoop(bool);
 */
 import "C"
 
@@ -22,8 +25,25 @@ func nativeLoop() {
 	C.nativeLoop()
 }
 
+func nativeEnd() {
+	C.nativeEnd()
+}
+
+func nativeStart() {
+	C.nativeStart()
+}
+
+// External native loop going one tick forward
+func nativeTick() {
+	C.nativeTick()
+}
+
 func quit() {
 	C.quit()
+}
+
+func setInternalLoop(internal bool) {
+	C.setInternalLoop(C.bool(internal))
 }
 
 // SetIcon sets the systray icon.

@@ -1,13 +1,30 @@
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "systray.h"
 
+bool internalLoop = false;
+void setInternalLoop(bool i) {
+	internalLoop = i;
+}
+
 void registerSystray(void) {
 }
 
+void nativeEnd(void) {
+}
+
 int nativeLoop(void) {
+	nativeStart();
 	printf("Linux is currently unsupported, failing to show system tray icon\n");
+	nativeEnd();
 	return 0;
+}
+
+void nativeStart(void) {
+}
+
+void nativeTick(void) {
 }
 
 void setIcon(const char* iconBytes, int length, bool template) {

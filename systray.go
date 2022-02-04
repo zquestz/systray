@@ -15,6 +15,7 @@ var (
 
 	systrayReady  func()
 	systrayExit   func()
+	systrayTick   func()
 	menuItems     = make(map[uint32]*MenuItem)
 	menuItemsLock sync.RWMutex
 
@@ -71,9 +72,17 @@ func newMenuItem(title string, tooltip string, parent *MenuItem) *MenuItem {
 
 // Run initializes GUI and starts the event loop, then invokes the onReady
 // callback. It blocks until systray.Quit() is called.
-func Run(onReady func(), onExit func()) {
+func Run(onReady, onExit func()) {
+	setInternalLoop(true)
 	Register(onReady, onExit)
+
 	nativeLoop()
+}
+
+func RunWithExternalLoop(onReady, onExit func()) (start, tick, end func()) {
+	Register(onReady, onExit)
+
+	return nativeStart, nativeTick, nativeEnd
 }
 
 // Register initializes GUI and registers the callbacks but relies on the
