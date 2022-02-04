@@ -783,8 +783,7 @@ var m = &struct {
 }{}
 
 func nativeLoop() {
-	for {
-		doNativeTick()
+	for doNativeTick() {
 	}
 }
 
@@ -793,8 +792,7 @@ func nativeEnd() {
 
 func nativeStart() {
 	go func() {
-		for {
-			doNativeTick()
+		for doNativeTick() {
 		}
 	}()
 }
@@ -802,7 +800,7 @@ func nativeStart() {
 func nativeTick() {
 }
 
-func doNativeTick() {
+func doNativeTick() bool {
 	ret, _, err := pGetMessage.Call(uintptr(unsafe.Pointer(m)), 0, 0, 0)
 
 	// If the function retrieves a message other than WM_QUIT, the return value is nonzero.
@@ -812,13 +810,14 @@ func doNativeTick() {
 	switch int32(ret) {
 	case -1:
 		log.Errorf("Error at message loop: %v", err)
-		return
+		return false
 	case 0:
-		return
+		return false
 	default:
 		pTranslateMessage.Call(uintptr(unsafe.Pointer(m)))
 		pDispatchMessage.Call(uintptr(unsafe.Pointer(m)))
 	}
+	return true
 }
 
 func quit() {
