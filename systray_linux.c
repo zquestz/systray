@@ -16,12 +16,12 @@ void nativeEnd(void) {
 
 int nativeLoop(void) {
 	nativeStart();
-	printf("Linux is currently unsupported, failing to show system tray icon\n");
 	nativeEnd();
 	return 0;
 }
 
 void nativeStart(void) {
+	printf("Linux is currently unsupported, failing to show system tray icon\n");
 }
 
 void setIcon(const char* iconBytes, int length, bool template) {
