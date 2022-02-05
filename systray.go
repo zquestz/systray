@@ -15,7 +15,6 @@ var (
 
 	systrayReady  func()
 	systrayExit   func()
-	systrayTick   func()
 	menuItems     = make(map[uint32]*MenuItem)
 	menuItemsLock sync.RWMutex
 
@@ -79,10 +78,12 @@ func Run(onReady, onExit func()) {
 	nativeLoop()
 }
 
-func RunWithExternalLoop(onReady, onExit func()) (start, tick, end func()) {
+// RunWithExternalLoop allows the systemtray module to operate with other tookits.
+// The returned start and end functions should be called by the toolkit when the application has started and will end.
+func RunWithExternalLoop(onReady, onExit func()) (start, end func()) {
 	Register(onReady, onExit)
 
-	return nativeStart, nativeTick, nativeEnd
+	return nativeStart, nativeEnd
 }
 
 // Register initializes GUI and registers the callbacks but relies on the

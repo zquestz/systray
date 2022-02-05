@@ -247,10 +247,6 @@ void nativeStart(void) {
   [delegate applicationDidFinishLaunching:NULL];
 }
 
-void nativeTick(void) {
-  // no-op as mac has no loop requirement
-}
-
 void runInMainThread(SEL method, id object) {
   [(AppDelegate*)[NSApp delegate]
     performSelectorOnMainThread:method

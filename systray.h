@@ -7,7 +7,6 @@ void registerSystray(void);
 void nativeEnd(void);
 int nativeLoop(void);
 void nativeStart(void);
-void nativeTick(void);
 
 void setIcon(const char* iconBytes, int length, bool template);
 void setMenuItemIcon(const char* iconBytes, int length, int menuId, bool template);

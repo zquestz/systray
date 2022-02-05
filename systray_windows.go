@@ -797,9 +797,6 @@ func nativeStart() {
 	}()
 }
 
-func nativeTick() {
-}
-
 func doNativeTick() bool {
 	ret, _, err := pGetMessage.Call(uintptr(unsafe.Pointer(m)), 0, 0, 0)
 

@@ -24,9 +24,6 @@ int nativeLoop(void) {
 void nativeStart(void) {
 }
 
-void nativeTick(void) {
-}
-
 void setIcon(const char* iconBytes, int length, bool template) {
 }
 

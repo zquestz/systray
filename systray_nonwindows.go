@@ -33,11 +33,6 @@ func nativeStart() {
 	C.nativeStart()
 }
 
-// External native loop going one tick forward
-func nativeTick() {
-	C.nativeTick()
-}
-
 func quit() {
 	C.quit()
 }
