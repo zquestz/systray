@@ -55,9 +55,7 @@ The following text will then appear on the console:
 
 
 ```sh
-go: finding github.com/skratchdot/open-golang latest
 go: finding github.com/fyne-io/systray latest
-go: finding github.com/getlantern/golog latest
 ```
 
 Now look for *Awesome App* in your menu bar!
