@@ -7,7 +7,6 @@ import (
 
 	"github.com/fyne-io/systray"
 	"github.com/fyne-io/systray/example/icon"
-	"github.com/skratchdot/open-golang/open"
 )
 
 func main() {
@@ -23,9 +22,9 @@ func onReady() {
 	systray.SetTemplateIcon(icon.Data, icon.Data)
 	systray.SetTitle("Awesome App")
 	systray.SetTooltip("Lantern")
-	mQuitOrig := systray.AddMenuItem("Quit", "Quit the whole app")
+	mQuit := systray.AddMenuItem("Quit", "Quit the whole app")
 	go func() {
-		<-mQuitOrig.ClickedCh
+		<-mQuit.ClickedCh
 		fmt.Println("Requesting quit")
 		systray.Quit()
 		fmt.Println("Finished quitting")
@@ -49,26 +48,18 @@ func onReady() {
 		subMenuBottom := subMenuMiddle.AddSubMenuItemCheckbox("SubMenuBottom - Toggle Panic!", "SubMenu Test (bottom) - Hide/Show Panic!", false)
 		subMenuBottom2 := subMenuMiddle.AddSubMenuItem("SubMenuBottom - Panic!", "SubMenu Test (bottom)")
 
-		mUrl := systray.AddMenuItem("Open UI", "my home")
-		mQuit := systray.AddMenuItem("退出", "Quit the whole app")
-
-		// Sets the icon of a menu item. Only available on Mac.
-		mQuit.SetIcon(icon.Data)
-
 		systray.AddSeparator()
-		mToggle := systray.AddMenuItem("Toggle", "Toggle the Quit button")
+		mToggle := systray.AddMenuItem("Toggle", "Toggle some menu items")
 		shown := true
 		toggle := func() {
 			if shown {
 				subMenuBottom.Check()
 				subMenuBottom2.Hide()
-				mQuitOrig.Hide()
 				mEnabled.Hide()
 				shown = false
 			} else {
 				subMenuBottom.Uncheck()
 				subMenuBottom2.Show()
-				mQuitOrig.Show()
 				mEnabled.Show()
 				shown = true
 			}
@@ -89,8 +80,6 @@ func onReady() {
 			case <-mEnabled.ClickedCh:
 				mEnabled.SetTitle("Disabled")
 				mEnabled.Disable()
-			case <-mUrl.ClickedCh:
-				open.Run("https://www.getlantern.org")
 			case <-subMenuBottom2.ClickedCh:
 				panic("panic button pressed")
 			case <-subMenuBottom.ClickedCh:
