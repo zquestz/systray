@@ -33,7 +33,6 @@ func SetTemplateIcon(templateIconBytes []byte, regularIconBytes []byte) {
 	iconData = regularIconBytes
 }
 
-
 // SetIcon sets the systray icon.
 // iconBytes should be the content of .ico for windows and .ico/.jpg/.png
 // for other platforms.
@@ -85,7 +84,7 @@ func showMenuItem(item *MenuItem) {
 func nativeLoop() int {
 	nativeStart()
 	select {
-	case <- quitChan:
+	case <-quitChan:
 		break
 	}
 	nativeEnd()
@@ -187,7 +186,7 @@ func nativeStart() {
     </signal>
     <property name="XAyatanaLabel" type="s" access="read" />
     <property name="XAyatanaLabelGuide" type="s" access="read" /> -->
-</interface>`+ introspect.IntrospectDataString+prop.IntrospectDataString+"</node>")
+</interface>` + introspect.IntrospectDataString + prop.IntrospectDataString + "</node>")
 
 	conn, _ := dbus.ConnectSessionBus()
 	conn.Export(introspect.Introspectable(intro), "/StatusNotifierItem",
