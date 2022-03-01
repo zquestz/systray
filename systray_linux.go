@@ -255,29 +255,33 @@ func convertToPixels(data []byte) PX {
 		return PX{}
 	}
 
-	p, _, err := image.Decode(bytes.NewReader(iconData))
+	img, _, err := image.Decode(bytes.NewReader(iconData))
 	if err != nil {
 		log.Printf("Failed to read icon format %v", err)
 		return PX{}
 	}
 
-	w, h := p.Bounds().Dx(), p.Bounds().Dy()
-	data2 := make([]byte, w*h*4)
+	return PX{
+		img.Bounds().Dx(), img.Bounds().Dy(),
+		argbForImage(img),
+	}
+}
+
+func argbForImage(img image.Image) []byte {
+	w, h := img.Bounds().Dx(), img.Bounds().Dy()
+	data := make([]byte, w*h*4)
 	i := 0
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			r, g, b, a := p.At(x, y).RGBA()
-			data2[i] = byte(a)
-			data2[i+1] = byte(r)
-			data2[i+2] = byte(g)
-			data2[i+3] = byte(b)
+			r, g, b, a := img.At(x, y).RGBA()
+			data[i] = byte(a)
+			data[i+1] = byte(r)
+			data[i+2] = byte(g)
+			data[i+3] = byte(b)
 			i += 4
 		}
 	}
-	return PX{
-		w, h,
-		data2,
-	}
+	return data
 }
 
 func createPropSpec() map[string]map[string]*prop.Prop {
