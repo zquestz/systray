@@ -1,3 +1,6 @@
+//Note that you need to have github.com/knightpp/dbus-codegen-go installed from "custom" branch
+//go:generate dbus-codegen-go -prefix org.kde -package notifier -output internal/generated/notifier/status_notifier_item.go internal/StatusNotifierItem.xml
+
 package systray
 
 import (
@@ -8,9 +11,14 @@ import (
 	"log"
 	"os"
 
+	"github.com/fyne-io/systray/internal/generated/notifier"
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/introspect"
 	"github.com/godbus/dbus/v5/prop"
+)
+
+const (
+	path = "/StatusNotifierItem"
 )
 
 var (
@@ -102,115 +110,39 @@ func quit() {
 func nativeStart() {
 	systrayReady()
 
-	intro := introspect.Introspectable(`<node>
-<!--  Based on:
- https://invent.kde.org/frameworks/knotifications/-/blob/master/src/org.kde.StatusNotifierItem.xml
- -->
-<interface name="org.kde.StatusNotifierItem">
-<property name="Category" type="s" access="read"/>
-<property name="Id" type="s" access="read"/>
-<property name="Title" type="s" access="read"/>
-<property name="Status" type="s" access="read"/>
-<property name="WindowId" type="i" access="read"/>
-<!--  An additional path to add to the theme search path to find the icons specified above.  -->
-<property name="IconThemePath" type="s" access="read"/>
-<property name="Menu" type="o" access="read"/>
-<property name="ItemIsMenu" type="b" access="read"/>
-<!--  main icon  -->
-<!--  names are preferred over pixmaps  -->
-<property name="IconName" type="s" access="read"/>
-<!-- struct containing width, height and image data -->
-<property name="IconPixmap" type="a(iiay)" access="read">
-<annotation name="org.qtproject.QtDBus.QtTypeName" value="KDbusImageVector"/>
-</property>
-<property name="OverlayIconName" type="s" access="read"/>
-<property name="OverlayIconPixmap" type="a(iiay)" access="read">
-<annotation name="org.qtproject.QtDBus.QtTypeName" value="KDbusImageVector"/>
-</property>
-<!--  Requesting attention icon  -->
-<property name="AttentionIconName" type="s" access="read"/>
-<!-- same definition as image -->
-<property name="AttentionIconPixmap" type="a(iiay)" access="read">
-<annotation name="org.qtproject.QtDBus.QtTypeName" value="KDbusImageVector"/>
-</property>
-<property name="AttentionMovieName" type="s" access="read"/>
-<!--  tooltip data  -->
-<!-- (iiay) is an image -->
-<!--  We disable this as we don't support tooltip, so no need to go through it
-    <property name="ToolTip" type="(sa(iiay)ss)" access="read">
-        <annotation name="org.qtproject.QtDBus.QtTypeName" value="KDbusToolTipStruct"/>
-    </property>
-     -->
-<!--  interaction: the systemtray wants the application to do something  -->
-<method name="ContextMenu">
-<!--  we're passing the coordinates of the icon, so the app knows where to put the popup window  -->
-<arg name="x" type="i" direction="in"/>
-<arg name="y" type="i" direction="in"/>
-</method>
-<method name="Activate">
-<arg name="x" type="i" direction="in"/>
-<arg name="y" type="i" direction="in"/>
-</method>
-<method name="SecondaryActivate">
-<arg name="x" type="i" direction="in"/>
-<arg name="y" type="i" direction="in"/>
-</method>
-<method name="Scroll">
-<arg name="delta" type="i" direction="in"/>
-<arg name="orientation" type="s" direction="in"/>
-</method>
-<!--  Signals: the client wants to change something in the status -->
-<signal name="NewTitle"> </signal>
-<signal name="NewIcon"> </signal>
-<signal name="NewAttentionIcon"> </signal>
-<signal name="NewOverlayIcon"> </signal>
-<!--  We disable this as we don't support tooltip, so no need to go through it
-    <signal name="NewToolTip">
-    </signal>
-     -->
-<signal name="NewStatus">
-<arg name="status" type="s"/>
-</signal>
-<!--  The following items are not supported by specs, but widely used  -->
-<signal name="NewIconThemePath">
-<arg type="s" name="icon_theme_path" direction="out"/>
-</signal>
-<signal name="NewMenu"/>
-<!--  ayatana labels  -->
-<!--  These are commented out because GDBusProxy would otherwise require them,
-         but they are not available for KDE indicators
-     -->
-<!-- <signal name="XAyatanaNewLabel">
-        <arg type="s" name="label" direction="out" />
-        <arg type="s" name="guide" direction="out" />
-    </signal>
-    <property name="XAyatanaLabel" type="s" access="read" />
-    <property name="XAyatanaLabelGuide" type="s" access="read" /> -->
-</interface>` + introspect.IntrospectDataString + prop.IntrospectDataString + "</node>")
-
 	conn, _ := dbus.ConnectSessionBus()
-	conn.Export(introspect.Introspectable(intro), "/StatusNotifierItem",
-		"org.freedesktop.DBus.Introspectable")
+	t := &tray{}
+	notifier.ExportStatusNotifierItem(conn, path, t)
 
-	_, err := prop.Export(conn, "/StatusNotifierItem", createPropSpec())
-	if err != nil {
-		log.Printf("Failed to export notifier item properties to bus")
-		return
-	}
-	err = conn.Export(&tray{}, "/StatusNotifierItem", "org.kde.StatusNotifierItem")
-	if err != nil {
-		log.Printf("Failed to export notifier item to bus")
-		return
-	}
-
-	name := fmt.Sprintf("org.kde.StatusNotifierItem-%d-1", os.Getpid()) // register id 1 for this process
-	_, err = conn.RequestName(name, dbus.NameFlagDoNotQueue)
+	name := fmt.Sprintf("io.fyne.systray-%d-1", os.Getpid()) // register id 1 for this process
+	_, err := conn.RequestName(name, dbus.NameFlagDoNotQueue)
 	if err != nil {
 		// fall back to existing name
 		name = conn.Names()[0]
 	}
 
-	obj := conn.Object("org.kde.StatusNotifierWatcher", dbus.ObjectPath("/StatusNotifierWatcher"))
+	_, err = prop.Export(conn, path, createPropSpec())
+	if err != nil {
+		log.Printf("Failed to export notifier item properties to bus")
+		return
+	}
+
+	node := introspect.Node{
+		Name: path,
+		Interfaces: []introspect.Interface{
+			introspect.IntrospectData,
+			prop.IntrospectData,
+			notifier.IntrospectDataStatusNotifierItem,
+		},
+	}
+	err = conn.Export(introspect.NewIntrospectable(&node), path,
+		"org.freedesktop.DBus.Introspectable")
+	if err != nil {
+		log.Printf("Failed to export introspection")
+		return
+	}
+
+	obj := conn.Object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher")
 	call := obj.Call("org.kde.StatusNotifierWatcher.RegisterStatusNotifierItem", 0, name)
 	if call.Err != nil {
 		log.Printf("Failed to register our icon with the notifier watcher, maybe no tray running?")
@@ -223,24 +155,24 @@ type tray struct {
 }
 
 // ContextMenu method is called when the user has right-clicked on our icon.
-func (t *tray) ContextMenu(x, y int) *dbus.Error {
+func (t *tray) ContextMenu(x, y int32) *dbus.Error {
 	// not supported for systray lib
 	return nil
 }
 
 // Activate requests that we perform the primary action, such as showing a menu.
-func (t *tray) Activate(x, y int) *dbus.Error {
+func (t *tray) Activate(x, y int32) *dbus.Error {
 	// TODO show menu, or have it handled in the dbus?
 	return nil
 }
 
 // SecondaryActivate is alternative non-context click, such as middle mouse button.
-func (t *tray) SecondaryActivate(x, y int) *dbus.Error {
+func (t *tray) SecondaryActivate(x, y int32) *dbus.Error {
 	return nil
 }
 
 // Scroll is called when the mouse wheel scrolls over the icon.
-func (t *tray) Scroll(delta int, orient string) *dbus.Error {
+func (t *tray) Scroll(delta int32, orient string) *dbus.Error {
 	return nil
 }
 
