@@ -7,7 +7,7 @@ import (
 	"github.com/godbus/dbus/v5/prop"
 )
 
-var rootMenu = menuLayout{}
+var rootMenu = &menuLayout{}
 
 // SetIcon sets the icon of a menu item. Only works on macOS and Windows.
 // iconBytes should be the content of .ico/.jpg/.png
@@ -15,7 +15,7 @@ func (item *MenuItem) SetIcon(iconBytes []byte) {
 }
 
 func (t *tray) GetLayout(parentId int32, recursionDepth int32, propertyNames []string) (revision uint32, layout menuLayout, err *dbus.Error) {
-	return 1, rootMenu, nil
+	return 1, *rootMenu, nil
 }
 
 // GetGroupProperties is com.canonical.dbusmenu.GetGroupProperties method.
@@ -103,7 +103,16 @@ type menuLayout = struct {
 }
 
 func addOrUpdateMenuItem(item *MenuItem) {
-	layout := menuLayout{
+	parent := rootMenu
+	if item.parent != nil {
+		m, ok := findLayout(int32(item.parent.id))
+		if ok {
+			parent = m
+			parent.V1["children-display"] = dbus.MakeVariant("submenu")
+		}
+	}
+
+	layout := &menuLayout{
 		V0: int32(item.id),
 		V1: map[string]dbus.Variant{
 			"label": dbus.MakeVariant(item.title),
@@ -121,7 +130,7 @@ func addOrUpdateMenuItem(item *MenuItem) {
 		layout.V1["toggle-type"] = dbus.MakeVariant("checkmark")
 	}
 
-	rootMenu.V2 = append(rootMenu.V2, dbus.MakeVariant(layout))
+	parent.V2 = append(parent.V2, dbus.MakeVariant(layout))
 }
 
 func addSeparator(id uint32) {
@@ -134,6 +143,28 @@ func addSeparator(id uint32) {
 	}
 
 	rootMenu.V2 = append(rootMenu.V2, dbus.MakeVariant(layout))
+}
+
+func findLayout(id int32) (*menuLayout, bool) {
+	return findSubLayout(id, rootMenu.V2)
+}
+
+func findSubLayout(id int32, vals []dbus.Variant) (*menuLayout, bool) {
+	for _, i := range vals {
+		item := i.Value().(*menuLayout)
+		if item.V0 == id {
+			return item, true
+		}
+
+		if len(item.V2) > 0 {
+			child, ok := findSubLayout(id, item.V2)
+			if ok {
+				return child, true
+			}
+		}
+	}
+
+	return nil, false
 }
 
 func hideMenuItem(item *MenuItem) {
