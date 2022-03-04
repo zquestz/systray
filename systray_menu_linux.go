@@ -111,6 +111,16 @@ func addOrUpdateMenuItem(item *MenuItem) {
 		V2: []dbus.Variant{},
 	}
 
+	if item.checked {
+		layout.V1["toggle-state"] = dbus.MakeVariant(1)
+	}
+	if item.disabled {
+		layout.V1["enabled"] = dbus.MakeVariant(false)
+	}
+	if item.isCheckable {
+		layout.V1["toggle-type"] = dbus.MakeVariant("checkmark")
+	}
+
 	rootMenu.V2 = append(rootMenu.V2, dbus.MakeVariant(layout))
 }
 

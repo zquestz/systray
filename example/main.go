@@ -36,7 +36,7 @@ func onReady() {
 		systray.SetTitle("Awesome App")
 		systray.SetTooltip("Pretty awesome棒棒嗒")
 		mChange := systray.AddMenuItem("Change Me", "Change Me")
-		mChecked := systray.AddMenuItemCheckbox("Unchecked", "Check Me", true)
+		mChecked := systray.AddMenuItemCheckbox("Checked", "Check Me", true)
 		mEnabled := systray.AddMenuItem("Enabled", "Enabled")
 		// Sets the icon of a menu item. Only available on Mac.
 		mEnabled.SetTemplateIcon(icon.Data, icon.Data)
