@@ -33,6 +33,9 @@ var (
 
 	// the title of our system tray icon
 	title string
+
+	// instance is the current instance of our DBus tray server
+	instance *tray
 )
 
 // SetTemplateIcon sets the systray icon as a template icon (on macOS), falling back
@@ -87,6 +90,7 @@ func nativeLoop() int {
 
 func nativeEnd() {
 	systrayExit()
+	instance.conn.Close()
 }
 
 func quit() {
@@ -95,13 +99,14 @@ func quit() {
 
 func nativeStart() {
 	systrayReady()
+	instance = &tray{menu: &menuLayout{}}
 
 	conn, _ := dbus.ConnectSessionBus()
-	t := &tray{}
-	notifier.ExportStatusNotifierItem(conn, path, t)
-	menu.ExportDbusmenu(conn, menuPath, t)
+	instance.conn = conn
+	notifier.ExportStatusNotifierItem(conn, path, instance)
+	menu.ExportDbusmenu(conn, menuPath, instance)
 
-	name := fmt.Sprintf("io.fyne.systray-%d-1", os.Getpid()) // register id 1 for this process
+	name := fmt.Sprintf("org.kde.StatusNotifierItem-%d-1", os.Getpid()) // register id 1 for this process
 	_, err := conn.RequestName(name, dbus.NameFlagDoNotQueue)
 	if err != nil {
 		// fall back to existing name
@@ -157,6 +162,8 @@ func nativeStart() {
 
 // tray is a basic type that handles the dbus functionality
 type tray struct {
+	conn *dbus.Conn
+	menu *menuLayout
 }
 
 // ContextMenu method is called when the user has right-clicked on our icon.

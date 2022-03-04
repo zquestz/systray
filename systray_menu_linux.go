@@ -3,11 +3,10 @@ package systray
 import (
 	"log"
 
+	"github.com/fyne-io/systray/internal/generated/menu"
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/prop"
 )
-
-var rootMenu = &menuLayout{}
 
 // SetIcon sets the icon of a menu item. Only works on macOS and Windows.
 // iconBytes should be the content of .ico/.jpg/.png
@@ -15,7 +14,7 @@ func (item *MenuItem) SetIcon(iconBytes []byte) {
 }
 
 func (t *tray) GetLayout(parentId int32, recursionDepth int32, propertyNames []string) (revision uint32, layout menuLayout, err *dbus.Error) {
-	return 1, *rootMenu, nil
+	return 1, *instance.menu, nil
 }
 
 // GetGroupProperties is com.canonical.dbusmenu.GetGroupProperties method.
@@ -103,38 +102,36 @@ type menuLayout = struct {
 }
 
 func addOrUpdateMenuItem(item *MenuItem) {
-	parent := rootMenu
-	if item.parent != nil {
-		m, ok := findLayout(int32(item.parent.id))
-		if ok {
-			parent = m
-			parent.V1["children-display"] = dbus.MakeVariant("submenu")
+	var layout *menuLayout
+	m, exists := findLayout(int32(item.id))
+	if exists {
+		layout = m
+	} else {
+		layout = &menuLayout{
+			V0: int32(item.id),
+			V1: map[string]dbus.Variant{},
+			V2: []dbus.Variant{},
 		}
+
+		parent := instance.menu
+		if item.parent != nil {
+			m, ok := findLayout(int32(item.parent.id))
+			if ok {
+				parent = m
+				parent.V1["children-display"] = dbus.MakeVariant("submenu")
+			}
+		}
+		parent.V2 = append(parent.V2, dbus.MakeVariant(layout))
 	}
 
-	layout := &menuLayout{
-		V0: int32(item.id),
-		V1: map[string]dbus.Variant{
-			"label": dbus.MakeVariant(item.title),
-		},
-		V2: []dbus.Variant{},
+	applyItemToLayout(item, layout)
+	if exists {
+		refresh()
 	}
-
-	if item.checked {
-		layout.V1["toggle-state"] = dbus.MakeVariant(1)
-	}
-	if item.disabled {
-		layout.V1["enabled"] = dbus.MakeVariant(false)
-	}
-	if item.isCheckable {
-		layout.V1["toggle-type"] = dbus.MakeVariant("checkmark")
-	}
-
-	parent.V2 = append(parent.V2, dbus.MakeVariant(layout))
 }
 
 func addSeparator(id uint32) {
-	layout := menuLayout{
+	layout := &menuLayout{
 		V0: int32(id),
 		V1: map[string]dbus.Variant{
 			"type": dbus.MakeVariant("separator"),
@@ -142,11 +139,28 @@ func addSeparator(id uint32) {
 		V2: []dbus.Variant{},
 	}
 
-	rootMenu.V2 = append(rootMenu.V2, dbus.MakeVariant(layout))
+	instance.menu.V2 = append(instance.menu.V2, dbus.MakeVariant(layout))
+}
+
+func applyItemToLayout(in *MenuItem, out *menuLayout) {
+	out.V1["enabled"] = dbus.MakeVariant(!in.disabled)
+	out.V1["label"] = dbus.MakeVariant(in.title)
+
+	if in.isCheckable {
+		out.V1["toggle-type"] = dbus.MakeVariant("checkmark")
+		if in.checked {
+			out.V1["toggle-state"] = dbus.MakeVariant(1)
+		} else {
+			out.V1["toggle-state"] = dbus.MakeVariant(0)
+		}
+	} else {
+		out.V1["toggle-type"] = dbus.MakeVariant("")
+		out.V1["toggle-state"] = dbus.MakeVariant(0)
+	}
 }
 
 func findLayout(id int32) (*menuLayout, bool) {
-	return findSubLayout(id, rootMenu.V2)
+	return findSubLayout(id, instance.menu.V2)
 }
 
 func findSubLayout(id int32, vals []dbus.Variant) (*menuLayout, bool) {
@@ -168,7 +182,24 @@ func findSubLayout(id int32, vals []dbus.Variant) (*menuLayout, bool) {
 }
 
 func hideMenuItem(item *MenuItem) {
+	m, exists := findLayout(int32(item.id))
+	if exists {
+		m.V1["visible"] = dbus.MakeVariant(false)
+		refresh()
+	}
 }
 
 func showMenuItem(item *MenuItem) {
+	m, exists := findLayout(int32(item.id))
+	if exists {
+		m.V1["visible"] = dbus.MakeVariant(true)
+		refresh()
+	}
+}
+
+func refresh() {
+	menu.Emit(instance.conn, &menu.Dbusmenu_LayoutUpdatedSignal{
+		Path: menuPath,
+		Body: &menu.Dbusmenu_LayoutUpdatedSignalBody{},
+	})
 }
