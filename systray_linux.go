@@ -1,5 +1,6 @@
 //Note that you need to have github.com/knightpp/dbus-codegen-go installed from "custom" branch
 //go:generate dbus-codegen-go -prefix org.kde -package notifier -output internal/generated/notifier/status_notifier_item.go internal/StatusNotifierItem.xml
+//go:generate dbus-codegen-go -prefix com.canonical -package menu -output internal/generated/menu/dbus_menu.go internal/DbusMenu.xml
 
 package systray
 
@@ -11,6 +12,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/fyne-io/systray/internal/generated/menu"
 	"github.com/fyne-io/systray/internal/generated/notifier"
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/introspect"
@@ -18,7 +20,8 @@ import (
 )
 
 const (
-	path = "/StatusNotifierItem"
+	path     = "/StatusNotifierItem"
+	menuPath = "/StatusNotifierMenu"
 )
 
 var (
@@ -58,11 +61,6 @@ func SetTitle(t string) {
 func SetTooltip(tooltip string) {
 }
 
-// SetIcon sets the icon of a menu item. Only works on macOS and Windows.
-// iconBytes should be the content of .ico/.jpg/.png
-func (item *MenuItem) SetIcon(iconBytes []byte) {
-}
-
 // SetTemplateIcon sets the icon of a menu item as a template icon (on macOS). On Windows, it
 // falls back to the regular icon bytes and on Linux it does nothing.
 // templateIconBytes and regularIconBytes should be the content of .ico for windows and
@@ -70,23 +68,11 @@ func (item *MenuItem) SetIcon(iconBytes []byte) {
 func (item *MenuItem) SetTemplateIcon(templateIconBytes []byte, regularIconBytes []byte) {
 }
 
-func addOrUpdateMenuItem(item *MenuItem) {
-}
-
 func setInternalLoop(_ bool) {
 	// nothing to action on Linux
 }
 
 func registerSystray() {
-}
-
-func addSeparator(id uint32) {
-}
-
-func hideMenuItem(item *MenuItem) {
-}
-
-func showMenuItem(item *MenuItem) {
 }
 
 func nativeLoop() int {
@@ -113,6 +99,7 @@ func nativeStart() {
 	conn, _ := dbus.ConnectSessionBus()
 	t := &tray{}
 	notifier.ExportStatusNotifierItem(conn, path, t)
+	menu.ExportDbusmenu(conn, menuPath, t)
 
 	name := fmt.Sprintf("io.fyne.systray-%d-1", os.Getpid()) // register id 1 for this process
 	_, err := conn.RequestName(name, dbus.NameFlagDoNotQueue)
@@ -124,6 +111,11 @@ func nativeStart() {
 	_, err = prop.Export(conn, path, createPropSpec())
 	if err != nil {
 		log.Printf("Failed to export notifier item properties to bus")
+		return
+	}
+	_, err = prop.Export(conn, menuPath, createMenuPropSpec())
+	if err != nil {
+		log.Printf("Failed to export notifier menu properties to bus")
 		return
 	}
 
@@ -141,6 +133,20 @@ func nativeStart() {
 		log.Printf("Failed to export introspection")
 		return
 	}
+	menuNode := introspect.Node{
+		Name: menuPath,
+		Interfaces: []introspect.Interface{
+			introspect.IntrospectData,
+			prop.IntrospectData,
+			menu.IntrospectDataDbusmenu,
+		},
+	}
+	err = conn.Export(introspect.NewIntrospectable(&menuNode), menuPath,
+		"org.freedesktop.DBus.Introspectable")
+	if err != nil {
+		log.Printf("Failed to export introspection")
+		return
+	}
 
 	obj := conn.Object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher")
 	call := obj.Call("org.kde.StatusNotifierWatcher.RegisterStatusNotifierItem", 0, name)
@@ -151,7 +157,6 @@ func nativeStart() {
 
 // tray is a basic type that handles the dbus functionality
 type tray struct {
-	prop.Properties
 }
 
 // ContextMenu method is called when the user has right-clicked on our icon.
@@ -256,6 +261,12 @@ func createPropSpec() map[string]map[string]*prop.Prop {
 			},
 			"IconThemePath": {
 				"",
+				false,
+				prop.EmitTrue,
+				nil,
+			},
+			"Menu": {
+				menuPath,
 				false,
 				prop.EmitTrue,
 				nil,
