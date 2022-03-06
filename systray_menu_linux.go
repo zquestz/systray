@@ -95,7 +95,7 @@ func createMenuPropSpec() map[string]map[string]*prop.Prop {
 	}
 }
 
-// menuuLayout is a named struct to map inte generated bindings. It represents the layout of a menu item
+// menuLayout is a named struct to map into generated bindings. It represents the layout of a menu item
 type menuLayout = struct {
 	V0 int32                   // the unique ID of this item
 	V1 map[string]dbus.Variant // properties for this menu item layout
