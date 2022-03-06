@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <node name="/StatusNotifierItem">
-This XML file does not appear to have any style information associated with it. The document tree is shown below.
 <!--  Based on:
  https://invent.kde.org/frameworks/knotifications/-/blob/master/src/org.kde.StatusNotifierItem.xml
  -->

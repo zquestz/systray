@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <node name="/" xmlns:dox="http://www.canonical.com/dbus/dox.dtd">
-This XML file does not appear to have any style information associated with it. The document tree is shown below.
 <interface name="com.canonical.dbusmenu">
 <!--  Properties  -->
 <property name="Version" type="u" access="read"/>
