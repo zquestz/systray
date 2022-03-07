@@ -6,7 +6,7 @@ removing the GTK dependency and support for legacy linux system tray.
 
 ## Features
 
-* Supported on Windows, macOS (cgo-free Linux is a work in progress)
+* Supported on Windows, macOS and Linux
 * Menu items can be checked and/or disabled
 * Methods may be called from any Goroutine
 
@@ -73,7 +73,7 @@ Now look for *Awesome App* in your menu bar!
 
 ### Linux
 
-> This is a work in progress and currently broken / non-functionali
+This implementation uses DBus to communicate through the SystemNotifier/AppIndicator spec, older tray implementations may not load the icon.
 
 ### Windows
 
