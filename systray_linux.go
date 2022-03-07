@@ -165,7 +165,7 @@ func nativeStart() {
 	}
 
 	obj := conn.Object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher")
-	call := obj.Call("org.kde.StatusNotifierWatcher.RegisterStatusNotifierItem", 0, name)
+	call := obj.Call("org.kde.StatusNotifierWatcher.RegisterStatusNotifierItem", 0, path)
 	if call.Err != nil {
 		log.Printf("Failed to register our icon with the notifier watcher, maybe no tray running?")
 	}
