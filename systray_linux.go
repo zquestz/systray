@@ -29,12 +29,8 @@ var (
 	// to signal quitting the internal main loop
 	quitChan = make(chan struct{})
 
-	// icon data for the main systray icon
-	iconData []byte
-	title, tooltipTitle string
-
 	// instance is the current instance of our DBus tray server
-	instance *tray
+	instance = &tray{menu: &menuLayout{}}
 )
 
 // SetTemplateIcon sets the systray icon as a template icon (on macOS), falling back
@@ -50,10 +46,10 @@ func SetTemplateIcon(templateIconBytes []byte, regularIconBytes []byte) {
 // iconBytes should be the content of .ico for windows and .ico/.jpg/.png
 // for other platforms.
 func SetIcon(iconBytes []byte) {
-	iconData = iconBytes
+	instance.iconData = iconBytes
 
-	if instance != nil && instance.props != nil {
-		instance.props["org.kde.StatusNotifierItem"]["IconPixmap"].Value = []PX{convertToPixels(iconData)}
+	if instance.props != nil {
+		instance.props["org.kde.StatusNotifierItem"]["IconPixmap"].Value = []PX{convertToPixels(iconBytes)}
 
 		if instance.conn != nil {
 			notifier.Emit(instance.conn, &notifier.StatusNotifierItem_NewIconSignal{
@@ -66,13 +62,24 @@ func SetIcon(iconBytes []byte) {
 
 // SetTitle sets the systray title, only available on Mac and Linux.
 func SetTitle(t string) {
-	title = t
+	instance.title = t
+
+	if instance.props != nil {
+		instance.props["org.kde.StatusNotifierItem"]["Title"].Value = t
+
+		if instance.conn != nil {
+			notifier.Emit(instance.conn, &notifier.StatusNotifierItem_NewTitleSignal{
+				Path: path,
+				Body: &notifier.StatusNotifierItem_NewTitleSignalBody{},
+			})
+		}
+	}
 }
 
 // SetTooltip sets the systray tooltip to display on mouse hover of the tray icon,
 // only available on Mac and Windows.
 func SetTooltip(tooltip string) {
-	tooltipTitle = tooltip
+	instance.tooltipTitle = tooltip
 }
 
 // SetTemplateIcon sets the icon of a menu item as a template icon (on macOS). On Windows, it
@@ -110,7 +117,6 @@ func quit() {
 
 func nativeStart() {
 	systrayReady()
-	instance = &tray{menu: &menuLayout{}}
 
 	conn, _ := dbus.ConnectSessionBus()
 	instance.conn = conn
@@ -124,7 +130,7 @@ func nativeStart() {
 		name = conn.Names()[0]
 	}
 
-	_, err = prop.Export(conn, path, createPropSpec())
+	_, err = prop.Export(conn, path, instance.createPropSpec())
 	if err != nil {
 		log.Printf("Failed to export notifier item properties to bus")
 		return
@@ -173,8 +179,15 @@ func nativeStart() {
 
 // tray is a basic type that handles the dbus functionality
 type tray struct {
+	// the DBus connection that we will use
 	conn *dbus.Conn
-	menu *menuLayout
+
+	// icon data for the main systray icon
+	iconData []byte
+	// title and tooltip state
+	title, tooltipTitle string
+
+	menu  *menuLayout
 	props map[string]map[string]*prop.Prop
 }
 
@@ -200,6 +213,67 @@ func (t *tray) Scroll(delta int32, orient string) *dbus.Error {
 	return nil
 }
 
+func (t *tray) createPropSpec() map[string]map[string]*prop.Prop {
+	t.props = map[string]map[string]*prop.Prop{
+		"org.kde.StatusNotifierItem": {
+			"Status": {
+				"Active", // Passive, Active or NeedsAttention
+				false,
+				prop.EmitTrue,
+				nil,
+			},
+			"Title": {
+				t.title,
+				false,
+				prop.EmitTrue,
+				nil,
+			},
+			"Id": {
+				"1",
+				false,
+				prop.EmitTrue,
+				nil,
+			},
+			"Category": {
+				"ApplicationStatus",
+				false,
+				prop.EmitTrue,
+				nil,
+			},
+			"IconName": {
+				"",
+				false,
+				prop.EmitTrue,
+				nil,
+			},
+			"IconPixmap": {
+				[]PX{convertToPixels(t.iconData)},
+				false,
+				prop.EmitTrue,
+				nil,
+			},
+			"IconThemePath": {
+				"",
+				false,
+				prop.EmitTrue,
+				nil,
+			},
+			"Menu": {
+				menuPath,
+				false,
+				prop.EmitTrue,
+				nil,
+			},
+			"ToolTip": {
+				tooltip{V2: t.tooltipTitle},
+				false,
+				prop.EmitTrue,
+				nil,
+			},
+		}}
+	return t.props
+}
+
 type PX struct {
 	W, H int
 	Pix  []byte
@@ -215,11 +289,11 @@ type tooltip = struct {
 }
 
 func convertToPixels(data []byte) PX {
-	if len(iconData) == 0 {
+	if len(data) == 0 {
 		return PX{}
 	}
 
-	img, _, err := image.Decode(bytes.NewReader(iconData))
+	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		log.Printf("Failed to read icon format %v", err)
 		return PX{}
@@ -246,65 +320,4 @@ func argbForImage(img image.Image) []byte {
 		}
 	}
 	return data
-}
-
-func createPropSpec() map[string]map[string]*prop.Prop {
-	instance.props = map[string]map[string]*prop.Prop{
-		"org.kde.StatusNotifierItem": {
-			"Status": {
-				"Active", // Passive, Active or NeedsAttention
-				false,
-				prop.EmitTrue,
-				nil,
-			},
-			"Title": {
-				title,
-				false,
-				prop.EmitTrue,
-				nil,
-			},
-			"Id": {
-				"1",
-				false,
-				prop.EmitTrue,
-				nil,
-			},
-			"Category": {
-				"ApplicationStatus",
-				false,
-				prop.EmitTrue,
-				nil,
-			},
-			"IconName": {
-				"",
-				false,
-				prop.EmitTrue,
-				nil,
-			},
-			"IconPixmap": {
-				[]PX{convertToPixels(iconData)},
-				false,
-				prop.EmitTrue,
-				nil,
-			},
-			"IconThemePath": {
-				"",
-				false,
-				prop.EmitTrue,
-				nil,
-			},
-			"Menu": {
-				menuPath,
-				false,
-				prop.EmitTrue,
-				nil,
-			},
-			"ToolTip": {
-				tooltip{V2: tooltipTitle},
-				false,
-				prop.EmitTrue,
-				nil,
-			},
-		}}
-	return instance.props
 }
