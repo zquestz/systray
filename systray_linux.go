@@ -31,9 +31,7 @@ var (
 
 	// icon data for the main systray icon
 	iconData []byte
-
-	// the title of our system tray icon
-	title string
+	title, tooltipTitle string
 
 	// instance is the current instance of our DBus tray server
 	instance *tray
@@ -74,6 +72,7 @@ func SetTitle(t string) {
 // SetTooltip sets the systray tooltip to display on mouse hover of the tray icon,
 // only available on Mac and Windows.
 func SetTooltip(tooltip string) {
+	tooltipTitle = tooltip
 }
 
 // SetTemplateIcon sets the icon of a menu item as a template icon (on macOS). On Windows, it
@@ -206,6 +205,15 @@ type PX struct {
 	Pix  []byte
 }
 
+// tooltip is our data for a tooltip property.
+// Param names need to match the generated code...
+type tooltip = struct {
+	V0 string // name
+	V1 []PX   // icons
+	V2 string // title
+	V3 string // description
+}
+
 func convertToPixels(data []byte) PX {
 	if len(iconData) == 0 {
 		return PX{}
@@ -287,6 +295,12 @@ func createPropSpec() map[string]map[string]*prop.Prop {
 			},
 			"Menu": {
 				menuPath,
+				false,
+				prop.EmitTrue,
+				nil,
+			},
+			"ToolTip": {
+				tooltip{V2: tooltipTitle},
 				false,
 				prop.EmitTrue,
 				nil,

@@ -33,11 +33,9 @@
 <property name="AttentionMovieName" type="s" access="read"/>
 <!--  tooltip data  -->
 <!-- (iiay) is an image -->
-<!--  We disable this as we don't support tooltip, so no need to go through it
-    <property name="ToolTip" type="(sa(iiay)ss)" access="read">
-        <annotation name="org.qtproject.QtDBus.QtTypeName" value="KDbusToolTipStruct"/>
-    </property>
-     -->
+<property name="ToolTip" type="(sa(iiay)ss)" access="read">
+<annotation name="org.qtproject.QtDBus.QtTypeName" value="KDbusToolTipStruct"/>
+</property>
 <!--  interaction: the systemtray wants the application to do something  -->
 <method name="ContextMenu">
 <!--  we're passing the coordinates of the icon, so the app knows where to put the popup window  -->
