@@ -69,7 +69,7 @@ func createMenuPropSpec() map[string]map[string]*prop.Prop {
 	return map[string]map[string]*prop.Prop{
 		"com.canonical.dbusmenu": {
 			"Version": {
-				uint32(1),
+				uint32(3),
 				false,
 				prop.EmitTrue,
 				nil,
@@ -81,7 +81,7 @@ func createMenuPropSpec() map[string]map[string]*prop.Prop {
 				nil,
 			},
 			"Status": {
-				"active",
+				"normal",
 				false,
 				prop.EmitTrue,
 				nil,

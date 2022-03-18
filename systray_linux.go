@@ -120,7 +120,7 @@ func nativeStart() {
 
 	conn, _ := dbus.ConnectSessionBus()
 	instance.conn = conn
-	notifier.ExportStatusNotifierItem(conn, path, instance)
+	notifier.ExportStatusNotifierItem(conn, path, &notifier.UnimplementedStatusNotifierItem{})
 	menu.ExportDbusmenu(conn, menuPath, instance)
 
 	name := fmt.Sprintf("org.kde.StatusNotifierItem-%d-1", os.Getpid()) // register id 1 for this process
@@ -191,28 +191,6 @@ type tray struct {
 	props map[string]map[string]*prop.Prop
 }
 
-// ContextMenu method is called when the user has right-clicked on our icon.
-func (t *tray) ContextMenu(x, y int32) *dbus.Error {
-	// not supported for systray lib
-	return nil
-}
-
-// Activate requests that we perform the primary action, such as showing a menu.
-func (t *tray) Activate(x, y int32) *dbus.Error {
-	// TODO show menu, or have it handled in the dbus?
-	return nil
-}
-
-// SecondaryActivate is alternative non-context click, such as middle mouse button.
-func (t *tray) SecondaryActivate(x, y int32) *dbus.Error {
-	return nil
-}
-
-// Scroll is called when the mouse wheel scrolls over the icon.
-func (t *tray) Scroll(delta int32, orient string) *dbus.Error {
-	return nil
-}
-
 func (t *tray) createPropSpec() map[string]map[string]*prop.Prop {
 	t.props = map[string]map[string]*prop.Prop{
 		"org.kde.StatusNotifierItem": {
@@ -258,8 +236,14 @@ func (t *tray) createPropSpec() map[string]map[string]*prop.Prop {
 				prop.EmitTrue,
 				nil,
 			},
+			"ItemIsMenu": {
+				true,
+				false,
+				prop.EmitTrue,
+				nil,
+			},
 			"Menu": {
-				menuPath,
+				dbus.ObjectPath(menuPath),
 				false,
 				prop.EmitTrue,
 				nil,
