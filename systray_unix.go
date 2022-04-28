@@ -204,7 +204,7 @@ func (t *tray) createPropSpec() map[string]map[string]*prop.Prop {
 			},
 			"Title": {
 				t.title,
-				false,
+				true,
 				prop.EmitTrue,
 				nil,
 			},
@@ -228,7 +228,7 @@ func (t *tray) createPropSpec() map[string]map[string]*prop.Prop {
 			},
 			"IconPixmap": {
 				[]PX{convertToPixels(t.iconData)},
-				false,
+				true,
 				prop.EmitTrue,
 				nil,
 			},
@@ -252,7 +252,7 @@ func (t *tray) createPropSpec() map[string]map[string]*prop.Prop {
 			},
 			"ToolTip": {
 				tooltip{V2: t.tooltipTitle},
-				false,
+				true,
 				prop.EmitTrue,
 				nil,
 			},
