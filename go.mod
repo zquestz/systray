@@ -1,4 +1,4 @@
-module github.com/mrpalide/systray
+module github.com/systray/systray
 
 go 1.17
 
