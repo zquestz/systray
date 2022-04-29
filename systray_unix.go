@@ -1,3 +1,4 @@
+//go:build linux || freebsd || openbsd || netbsd
 // +build linux freebsd openbsd netbsd
 
 //Note that you need to have github.com/knightpp/dbus-codegen-go installed from "custom" branch
@@ -18,8 +19,8 @@ import (
 	"github.com/godbus/dbus/v5/introspect"
 	"github.com/godbus/dbus/v5/prop"
 
-	"fyne.io/systray/internal/generated/menu"
-	"fyne.io/systray/internal/generated/notifier"
+	"github.com/mrpalide/systray/internal/generated/menu"
+	"github.com/mrpalide/systray/internal/generated/notifier"
 )
 
 const (

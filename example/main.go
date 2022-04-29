@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"time"
 
-	"fyne.io/systray"
-	"fyne.io/systray/example/icon"
+	"github.com/mrpalide/systray"
+	"github.com/mrpalide/systray/example/icon"
 )
 
 func main() {
