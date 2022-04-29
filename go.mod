@@ -1,4 +1,4 @@
-module github.com/systray/systray
+module github.com/skycoin/systray
 
 go 1.17
 
