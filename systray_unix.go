@@ -50,38 +50,64 @@ func SetTemplateIcon(templateIconBytes []byte, regularIconBytes []byte) {
 func SetIcon(iconBytes []byte) {
 	instance.iconData = iconBytes
 
-	if instance.props != nil {
-		instance.props["org.kde.StatusNotifierItem"]["IconPixmap"].Value = []PX{convertToPixels(iconBytes)}
-
-		if instance.conn != nil {
-			notifier.Emit(instance.conn, &notifier.StatusNotifierItem_NewIconSignal{
-				Path: path,
-				Body: &notifier.StatusNotifierItem_NewIconSignalBody{},
-			})
-		}
+	if instance.props == nil {
+		return
 	}
+
+	err := instance.props.Set("org.kde.StatusNotifierItem", "IconPixmap",
+		dbus.MakeVariant([]PX{convertToPixels(iconBytes)}))
+	if err != nil {
+		log.Printf("Failed to set IconPixmap")
+		return
+	}
+	if instance.conn == nil {
+		return
+	}
+
+	notifier.Emit(instance.conn, &notifier.StatusNotifierItem_NewIconSignal{
+		Path: path,
+		Body: &notifier.StatusNotifierItem_NewIconSignalBody{},
+	})
 }
 
 // SetTitle sets the systray title, only available on Mac and Linux.
 func SetTitle(t string) {
 	instance.title = t
 
-	if instance.props != nil {
-		instance.props["org.kde.StatusNotifierItem"]["Title"].Value = t
-
-		if instance.conn != nil {
-			notifier.Emit(instance.conn, &notifier.StatusNotifierItem_NewTitleSignal{
-				Path: path,
-				Body: &notifier.StatusNotifierItem_NewTitleSignalBody{},
-			})
-		}
+	if instance.props == nil {
+		return
 	}
+	err := instance.props.Set("org.kde.StatusNotifierItem", "Title",
+		dbus.MakeVariant(t))
+	if err != nil {
+		log.Printf("Failed to set Title")
+		return
+	}
+
+	if instance.conn == nil {
+		return
+	}
+
+	notifier.Emit(instance.conn, &notifier.StatusNotifierItem_NewTitleSignal{
+		Path: path,
+		Body: &notifier.StatusNotifierItem_NewTitleSignalBody{},
+	})
 }
 
 // SetTooltip sets the systray tooltip to display on mouse hover of the tray icon,
 // only available on Mac and Windows.
 func SetTooltip(tooltip string) {
 	instance.tooltipTitle = tooltip
+
+	if instance.props == nil {
+		return
+	}
+	err := instance.props.Set("org.kde.StatusNotifierItem", "ToolTip",
+		dbus.MakeVariant(tooltip))
+	if err != nil {
+		log.Printf("Failed to set ToolTip")
+		return
+	}
 }
 
 // SetTemplateIcon sets the icon of a menu item as a template icon (on macOS). On Windows, it
@@ -190,11 +216,11 @@ type tray struct {
 	title, tooltipTitle string
 
 	menu  *menuLayout
-	props map[string]map[string]*prop.Prop
+	props *prop.Properties
 }
 
 func (t *tray) createPropSpec() map[string]map[string]*prop.Prop {
-	t.props = map[string]map[string]*prop.Prop{
+	return map[string]map[string]*prop.Prop{
 		"org.kde.StatusNotifierItem": {
 			"Status": {
 				"Active", // Passive, Active or NeedsAttention
@@ -257,7 +283,6 @@ func (t *tray) createPropSpec() map[string]map[string]*prop.Prop {
 				nil,
 			},
 		}}
-	return t.props
 }
 
 type PX struct {
