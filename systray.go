@@ -3,6 +3,7 @@ package systray
 
 import (
 	"fmt"
+	"log"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -229,7 +230,7 @@ func systrayMenuItemSelected(id uint32) {
 	item, ok := menuItems[id]
 	menuItemsLock.RUnlock()
 	if !ok {
-		fmt.Printf("No menu item with ID %v", id)
+		log.Printf("systray error: no menu item with ID %d\n", id)
 		return
 	}
 	select {

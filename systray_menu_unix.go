@@ -38,7 +38,7 @@ func (t *tray) Event(id int32, eventId string, data dbus.Variant, timestamp uint
 	if eventId == "clicked" {
 		item, ok := menuItems[uint32(id)]
 		if !ok {
-			log.Printf("Failed to look up clicked menu item")
+			log.Printf("systray error: failed to look up clicked menu item with ID %d\n", id)
 			return
 		}
 
@@ -203,9 +203,12 @@ func showMenuItem(item *MenuItem) {
 
 func refresh() {
 	if instance.conn != nil {
-		menu.Emit(instance.conn, &menu.Dbusmenu_LayoutUpdatedSignal{
+		err := menu.Emit(instance.conn, &menu.Dbusmenu_LayoutUpdatedSignal{
 			Path: menuPath,
 			Body: &menu.Dbusmenu_LayoutUpdatedSignalBody{},
 		})
+		if err != nil {
+			log.Printf("systray error: failed to emit layout updated signal: %s\n", err)
+		}
 	}
 }

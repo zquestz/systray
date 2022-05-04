@@ -54,20 +54,24 @@ func SetIcon(iconBytes []byte) {
 		return
 	}
 
-	err := instance.props.Set("org.kde.StatusNotifierItem", "IconPixmap",
+	dbusErr := instance.props.Set("org.kde.StatusNotifierItem", "IconPixmap",
 		dbus.MakeVariant([]PX{convertToPixels(iconBytes)}))
-	if err != nil {
-		log.Printf("Failed to set IconPixmap")
+	if dbusErr != nil {
+		log.Printf("systray error: failed to set IconPixmap prop: %s\n", dbusErr)
 		return
 	}
 	if instance.conn == nil {
 		return
 	}
 
-	notifier.Emit(instance.conn, &notifier.StatusNotifierItem_NewIconSignal{
+	err := notifier.Emit(instance.conn, &notifier.StatusNotifierItem_NewIconSignal{
 		Path: path,
 		Body: &notifier.StatusNotifierItem_NewIconSignalBody{},
 	})
+	if err != nil {
+		log.Printf("systray error: failed to emit new icon signal: %s\n", err)
+		return
+	}
 }
 
 // SetTitle sets the systray title, only available on Mac and Linux.
@@ -77,10 +81,10 @@ func SetTitle(t string) {
 	if instance.props == nil {
 		return
 	}
-	err := instance.props.Set("org.kde.StatusNotifierItem", "Title",
+	dbusErr := instance.props.Set("org.kde.StatusNotifierItem", "Title",
 		dbus.MakeVariant(t))
-	if err != nil {
-		log.Printf("Failed to set Title")
+	if dbusErr != nil {
+		log.Printf("systray error: failed to set Title prop: %s\n", dbusErr)
 		return
 	}
 
@@ -88,10 +92,14 @@ func SetTitle(t string) {
 		return
 	}
 
-	notifier.Emit(instance.conn, &notifier.StatusNotifierItem_NewTitleSignal{
+	err := notifier.Emit(instance.conn, &notifier.StatusNotifierItem_NewTitleSignal{
 		Path: path,
 		Body: &notifier.StatusNotifierItem_NewTitleSignalBody{},
 	})
+	if err != nil {
+		log.Printf("systray error: failed to emit new title signal: %s\n", err)
+		return
+	}
 }
 
 // SetTooltip sets the systray tooltip to display on mouse hover of the tray icon,
@@ -102,10 +110,10 @@ func SetTooltip(tooltip string) {
 	if instance.props == nil {
 		return
 	}
-	err := instance.props.Set("org.kde.StatusNotifierItem", "ToolTip",
+	dbusErr := instance.props.Set("org.kde.StatusNotifierItem", "ToolTip",
 		dbus.MakeVariant(tooltip))
-	if err != nil {
-		log.Printf("Failed to set ToolTip")
+	if dbusErr != nil {
+		log.Printf("systray error: failed to set ToolTip prop: %s\n", dbusErr)
 		return
 	}
 }
@@ -148,24 +156,31 @@ func nativeStart() {
 
 	conn, _ := dbus.ConnectSessionBus()
 	instance.conn = conn
-	notifier.ExportStatusNotifierItem(conn, path, &notifier.UnimplementedStatusNotifierItem{})
-	menu.ExportDbusmenu(conn, menuPath, instance)
+	err := notifier.ExportStatusNotifierItem(conn, path, &notifier.UnimplementedStatusNotifierItem{})
+	if err != nil {
+		log.Printf("systray error: failed to export status notifier item: %s\n", err)
+	}
+	err = menu.ExportDbusmenu(conn, menuPath, instance)
+	if err != nil {
+		log.Printf("systray error: failed to export status notifier item: %s\n", err)
+	}
 
 	name := fmt.Sprintf("org.kde.StatusNotifierItem-%d-1", os.Getpid()) // register id 1 for this process
-	_, err := conn.RequestName(name, dbus.NameFlagDoNotQueue)
+	_, err = conn.RequestName(name, dbus.NameFlagDoNotQueue)
 	if err != nil {
+		log.Printf("systray error: failed to request name: %s\n", err)
 		// fall back to existing name
 		name = conn.Names()[0]
 	}
 
 	instance.props, err = prop.Export(conn, path, instance.createPropSpec())
 	if err != nil {
-		log.Printf("Failed to export notifier item properties to bus")
+		log.Printf("systray error: failed to export notifier item properties to bus: %s\n", err)
 		return
 	}
 	_, err = prop.Export(conn, menuPath, createMenuPropSpec())
 	if err != nil {
-		log.Printf("Failed to export notifier menu properties to bus")
+		log.Printf("systray error: failed to export notifier menu properties to bus: %s\n", err)
 		return
 	}
 
@@ -180,7 +195,7 @@ func nativeStart() {
 	err = conn.Export(introspect.NewIntrospectable(&node), path,
 		"org.freedesktop.DBus.Introspectable")
 	if err != nil {
-		log.Printf("Failed to export introspection")
+		log.Printf("systray error: failed to export node introspection: %s\n", err)
 		return
 	}
 	menuNode := introspect.Node{
@@ -194,14 +209,14 @@ func nativeStart() {
 	err = conn.Export(introspect.NewIntrospectable(&menuNode), menuPath,
 		"org.freedesktop.DBus.Introspectable")
 	if err != nil {
-		log.Printf("Failed to export introspection")
+		log.Printf("systray error: failed to export menu node introspection: %s\n", err)
 		return
 	}
 
 	obj := conn.Object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher")
 	call := obj.Call("org.kde.StatusNotifierWatcher.RegisterStatusNotifierItem", 0, path)
 	if call.Err != nil {
-		log.Printf("Failed to register our icon with the notifier watcher, maybe no tray running?")
+		log.Printf("systray error: failed to register our icon with the notifier watcher (maybe no tray is running?): %s\n", call.Err)
 	}
 }
 
