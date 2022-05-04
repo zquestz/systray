@@ -158,7 +158,7 @@ func nativeStart() {
 		name = conn.Names()[0]
 	}
 
-	_, err = prop.Export(conn, path, instance.createPropSpec())
+	instance.props, err = prop.Export(conn, path, instance.createPropSpec())
 	if err != nil {
 		log.Printf("Failed to export notifier item properties to bus")
 		return
