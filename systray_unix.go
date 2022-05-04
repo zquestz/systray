@@ -134,10 +134,7 @@ func registerSystray() {
 
 func nativeLoop() int {
 	nativeStart()
-	select {
-	case <-quitChan:
-		break
-	}
+	<-quitChan
 	nativeEnd()
 	return 0
 }
@@ -170,7 +167,7 @@ func nativeStart() {
 	if err != nil {
 		log.Printf("systray error: failed to request name: %s\n", err)
 		// fall back to existing name
-		name = conn.Names()[0]
+		name = conn.Names()[0] //nolint:ineffassign,staticcheck // TODO: Name is not used anymore.
 	}
 
 	instance.props, err = prop.Export(conn, path, instance.createPropSpec())
@@ -238,64 +235,64 @@ func (t *tray) createPropSpec() map[string]map[string]*prop.Prop {
 	return map[string]map[string]*prop.Prop{
 		"org.kde.StatusNotifierItem": {
 			"Status": {
-				"Active", // Passive, Active or NeedsAttention
-				false,
-				prop.EmitTrue,
-				nil,
+				Value:    "Active", // Passive, Active or NeedsAttention
+				Writable: false,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"Title": {
-				t.title,
-				true,
-				prop.EmitTrue,
-				nil,
+				Value:    t.title,
+				Writable: true,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"Id": {
-				"1",
-				false,
-				prop.EmitTrue,
-				nil,
+				Value:    "1",
+				Writable: false,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"Category": {
-				"ApplicationStatus",
-				false,
-				prop.EmitTrue,
-				nil,
+				Value:    "ApplicationStatus",
+				Writable: false,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"IconName": {
-				"",
-				false,
-				prop.EmitTrue,
-				nil,
+				Value:    "",
+				Writable: false,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"IconPixmap": {
-				[]PX{convertToPixels(t.iconData)},
-				true,
-				prop.EmitTrue,
-				nil,
+				Value:    []PX{convertToPixels(t.iconData)},
+				Writable: true,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"IconThemePath": {
-				"",
-				false,
-				prop.EmitTrue,
-				nil,
+				Value:    "",
+				Writable: false,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"ItemIsMenu": {
-				true,
-				false,
-				prop.EmitTrue,
-				nil,
+				Value:    true,
+				Writable: false,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"Menu": {
-				dbus.ObjectPath(menuPath),
-				false,
-				prop.EmitTrue,
-				nil,
+				Value:    dbus.ObjectPath(menuPath),
+				Writable: false,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"ToolTip": {
-				tooltip{V2: t.tooltipTitle},
-				true,
-				prop.EmitTrue,
-				nil,
+				Value:    tooltip{V2: t.tooltipTitle},
+				Writable: true,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 		}}
 }
