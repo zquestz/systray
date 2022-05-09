@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"time"
 
 	"github.com/skycoin/systray"
@@ -12,7 +11,7 @@ import (
 func main() {
 	onExit := func() {
 		now := time.Now()
-		ioutil.WriteFile(fmt.Sprintf(`on_exit_%d.txt`, now.UnixNano()), []byte(now.String()), 0644)
+		fmt.Println("Exit at", now.String())
 	}
 
 	systray.Run(onReady, onExit)

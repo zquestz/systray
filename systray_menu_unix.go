@@ -39,7 +39,7 @@ func (t *tray) Event(id int32, eventId string, data dbus.Variant, timestamp uint
 	if eventId == "clicked" {
 		item, ok := menuItems[uint32(id)]
 		if !ok {
-			log.Printf("Failed to look up clicked menu item")
+			log.Printf("systray error: failed to look up clicked menu item with ID %d\n", id)
 			return
 		}
 
@@ -72,28 +72,28 @@ func createMenuPropSpec() map[string]map[string]*prop.Prop {
 	return map[string]map[string]*prop.Prop{
 		"com.canonical.dbusmenu": {
 			"Version": {
-				uint32(3),
-				false,
-				prop.EmitTrue,
-				nil,
+				Value:    uint32(3),
+				Writable: false,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"TextDirection": {
-				"ltr",
-				false,
-				prop.EmitTrue,
-				nil,
+				Value:    "ltr",
+				Writable: false,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"Status": {
-				"normal",
-				false,
-				prop.EmitTrue,
-				nil,
+				Value:    "normal",
+				Writable: false,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 			"IconThemePath": {
-				[]string{},
-				false,
-				prop.EmitTrue,
-				nil,
+				Value:    []string{},
+				Writable: false,
+				Emit:     prop.EmitTrue,
+				Callback: nil,
 			},
 		},
 	}
@@ -204,9 +204,12 @@ func showMenuItem(item *MenuItem) {
 
 func refresh() {
 	if instance.conn != nil {
-		menu.Emit(instance.conn, &menu.Dbusmenu_LayoutUpdatedSignal{
+		err := menu.Emit(instance.conn, &menu.Dbusmenu_LayoutUpdatedSignal{
 			Path: menuPath,
 			Body: &menu.Dbusmenu_LayoutUpdatedSignalBody{},
 		})
+		if err != nil {
+			log.Printf("systray error: failed to emit layout updated signal: %s\n", err)
+		}
 	}
 }
