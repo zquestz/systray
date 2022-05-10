@@ -6,6 +6,7 @@ package systray
 import (
 	"log"
 	"sync/atomic"
+	"time"
 
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/prop"
@@ -20,6 +21,12 @@ func (item *MenuItem) SetIcon(iconBytes []byte) {
 
 func (t *tray) GetLayout(parentID int32, recursionDepth int32, propertyNames []string) (revision uint32, layout menuLayout, err *dbus.Error) {
 	// log.Printf("systray GetLayout for parent: %d, version: %d", parentID, instance.menuVersion)
+
+	// instance.menu must be protected from writing during the serialization it to XML within the internal loop of the dbus incomming message handler (Conn.inWorker()).
+	instance.menuLock.RLock()
+	time.AfterFunc(time.Millisecond, instance.menuLock.RUnlock) // it's a really very stupid solution, but i have no better idea.
+	// Making a full copy of instance.menu seems even stupidest....
+
 	return instance.menuVersion, *instance.menu, nil
 }
 
