@@ -19,15 +19,25 @@ import (
 func (item *MenuItem) SetIcon(iconBytes []byte) {
 }
 
+func protectInstance() {
+	// instance.menu or its part must be protected from writing during the serialization it to XML within the internal loop of the dbus incomming message handler (Conn.inWorker()).
+	instance.menuLock.RLock()
+	time.AfterFunc(time.Millisecond, instance.menuLock.RUnlock) // it's a really very stupid solution, but i have no better idea.
+	// Making a full copy of instance.menu or part of instance.menu seems even stupidest....
+}
+
 func (t *tray) GetLayout(parentID int32, recursionDepth int32, propertyNames []string) (revision uint32, layout menuLayout, err *dbus.Error) {
 	// log.Printf("systray GetLayout for parent: %d, version: %d", parentID, instance.menuVersion)
 
-	// instance.menu must be protected from writing during the serialization it to XML within the internal loop of the dbus incomming message handler (Conn.inWorker()).
-	instance.menuLock.RLock()
-	time.AfterFunc(time.Millisecond, instance.menuLock.RUnlock) // it's a really very stupid solution, but i have no better idea.
-	// Making a full copy of instance.menu seems even stupidest....
-
-	return instance.menuVersion, *instance.menu, nil
+	if parentID == 0 {
+		protectInstance()
+		return instance.menuVersion, *instance.menu, nil
+	}
+	if m, ok := findLayout(parentID); ok {
+		protectInstance()
+		return instance.menuVersion, *m, nil
+	}
+	return
 }
 
 // GetGroupProperties is com.canonical.dbusmenu.GetGroupProperties method.
@@ -47,6 +57,9 @@ func (t *tray) GetGroupProperties(ids []int32, propertyNames []string) (properti
 				V1: m.V1,
 			})
 		}
+		if len(properties) > 0 {
+			protectInstance()
+		}
 	}
 	return
 }
@@ -56,6 +69,7 @@ func (t *tray) GetProperty(id int32, name string) (value dbus.Variant, err *dbus
 	// log.Printf("systray GetProperty for id: %d", id)
 	if m, ok := findLayout(id); ok {
 		if p, ok := m.V1[name]; ok {
+			protectInstance()
 			return p, nil
 		}
 	}
