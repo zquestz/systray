@@ -6,7 +6,6 @@ package systray
 import (
 	"log"
 	"sync/atomic"
-	"time"
 
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/prop"
@@ -19,23 +18,35 @@ import (
 func (item *MenuItem) SetIcon(iconBytes []byte) {
 }
 
-func protectInstance() {
-	// instance.menu or its part must be protected from writing during the serialization it to XML within the internal loop of the dbus incomming message handler (Conn.inWorker()).
-	instance.menuLock.RLock()
-	time.AfterFunc(time.Millisecond, instance.menuLock.RUnlock) // it's a really very stupid solution, but i have no better idea.
-	// Making a full copy of instance.menu or part of instance.menu seems even stupidest....
+// copyLayout makes full copy of layout
+func copyLayout(in *menuLayout, depth int32) *menuLayout {
+	out := menuLayout{
+		V0: in.V0,
+		V1: make(map[string]dbus.Variant, len(in.V1)),
+	}
+	for k, v := range in.V1 {
+		out.V1[k] = v
+	}
+	if depth != 0 {
+		depth--
+		out.V2 = make([]dbus.Variant, len(in.V2))
+		for i, v := range in.V2 {
+			out.V2[i] = dbus.MakeVariant(copyLayout(v.Value().(*menuLayout), depth))
+		}
+	} else {
+		out.V2 = []dbus.Variant{}
+	}
+	return &out
 }
 
 func (t *tray) GetLayout(parentID int32, recursionDepth int32, propertyNames []string) (revision uint32, layout menuLayout, err *dbus.Error) {
-	// log.Printf("systray GetLayout for parent: %d, version: %d", parentID, instance.menuVersion)
-
-	if parentID == 0 {
-		protectInstance()
-		return instance.menuVersion, *instance.menu, nil
-	}
+	// log.Printf("systray GetLayout for parent: %d, depth: %d", parentID, recursionDepth)
+	// defer log.Printf("systray GetLayout for parent: %d, version: %d - done", parentID, instance.menuVersion)
 	if m, ok := findLayout(parentID); ok {
-		protectInstance()
-		return instance.menuVersion, *m, nil
+		instance.menuLock.RLock()
+		defer instance.menuLock.RUnlock()
+		// return copy of menu layout to prevent panic from cuncurrent access to layout
+		return instance.menuVersion, *copyLayout(m, recursionDepth), nil
 	}
 	return
 }
@@ -49,16 +60,19 @@ func (t *tray) GetGroupProperties(ids []int32, propertyNames []string) (properti
 	// defer log.Printf("systray GetGroupProperties for ids: %v - done", ids)
 	for _, id := range ids {
 		if m, ok := findLayout(id); ok {
-			properties = append(properties, struct {
+			p := struct {
 				V0 int32
 				V1 map[string]dbus.Variant
 			}{
 				V0: m.V0,
-				V1: m.V1,
-			})
-		}
-		if len(properties) > 0 {
-			protectInstance()
+				V1: make(map[string]dbus.Variant, len(m.V1)),
+			}
+			instance.menuLock.RLock()
+			for k, v := range m.V1 {
+				p.V1[k] = v
+			}
+			instance.menuLock.RUnlock()
+			properties = append(properties, p)
 		}
 	}
 	return
@@ -66,10 +80,12 @@ func (t *tray) GetGroupProperties(ids []int32, propertyNames []string) (properti
 
 // GetProperty is com.canonical.dbusmenu.GetProperty method.
 func (t *tray) GetProperty(id int32, name string) (value dbus.Variant, err *dbus.Error) {
-	// log.Printf("systray GetProperty for id: %d", id)
+	// log.Printf("systray GetProperty '%s' for id: %d", name, id)
+	// defer log.Printf("systray GetProperty %s for id: %d - return %v, %v", name, id, value, err)
 	if m, ok := findLayout(id); ok {
+		instance.menuLock.RLock()
+		defer instance.menuLock.RUnlock()
 		if p, ok := m.V1[name]; ok {
-			protectInstance()
 			return p, nil
 		}
 	}
@@ -78,6 +94,7 @@ func (t *tray) GetProperty(id int32, name string) (value dbus.Variant, err *dbus
 
 // Event is com.canonical.dbusmenu.Event method.
 func (t *tray) Event(id int32, eventID string, data dbus.Variant, timestamp uint32) (err *dbus.Error) {
+	// log.Printf("systray Event id: %d type: %s data: %v ts: %v", id, eventID, data, timestamp)
 	if eventID == "clicked" {
 		// log.Printf("systray clicked for id: %d", id)
 		menuItemsLock.RLock()
@@ -234,6 +251,9 @@ func applyItemToLayout(in *MenuItem, out *menuLayout) {
 }
 
 func findLayout(id int32) (*menuLayout, bool) {
+	if id == 0 {
+		return instance.menu, true
+	}
 	instance.menuLock.RLock()
 	defer instance.menuLock.RUnlock()
 	return findSubLayout(id, instance.menu.V2)
@@ -296,5 +316,6 @@ func refresh() {
 		if err != nil {
 			log.Printf("systray error: failed to emit layout updated signal: %s\n", err)
 		}
+		// log.Printf("systay refresh LayoutUpdatedSignal, menu version: %d", version)
 	}
 }
