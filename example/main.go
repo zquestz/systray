@@ -22,6 +22,7 @@ func onReady() {
 	systray.SetTitle("Awesome App")
 	systray.SetTooltip("Lantern")
 	mQuit := systray.AddMenuItem("Quit", "Quit the whole app")
+	mQuit.Enable()
 	go func() {
 		<-mQuit.ClickedCh
 		fmt.Println("Requesting quit")

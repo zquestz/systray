@@ -298,7 +298,7 @@ func showMenuItem(item *MenuItem) {
 }
 
 func refresh() {
-	if instance.conn != nil {
+	if instance.conn != nil && instance.menuProps != nil {
 		version := atomic.AddUint32(&instance.menuVersion, 1)
 		dbusErr := instance.menuProps.Set("com.canonical.dbusmenu", "Version",
 			dbus.MakeVariant(version))
