@@ -40,8 +40,6 @@ func copyLayout(in *menuLayout, depth int32) *menuLayout {
 }
 
 func (t *tray) GetLayout(parentID int32, recursionDepth int32, propertyNames []string) (revision uint32, layout menuLayout, err *dbus.Error) {
-	// log.Printf("systray GetLayout for parent: %d, depth: %d", parentID, recursionDepth)
-	// defer log.Printf("systray GetLayout for parent: %d, version: %d - done", parentID, instance.menuVersion)
 	if m, ok := findLayout(parentID); ok {
 		instance.menuLock.RLock()
 		defer instance.menuLock.RUnlock()
@@ -56,8 +54,6 @@ func (t *tray) GetGroupProperties(ids []int32, propertyNames []string) (properti
 	V0 int32
 	V1 map[string]dbus.Variant
 }, err *dbus.Error) {
-	// log.Printf("systray GetGroupProperties for ids: %v", ids)
-	// defer log.Printf("systray GetGroupProperties for ids: %v - done", ids)
 	for _, id := range ids {
 		if m, ok := findLayout(id); ok {
 			p := struct {
@@ -80,8 +76,6 @@ func (t *tray) GetGroupProperties(ids []int32, propertyNames []string) (properti
 
 // GetProperty is com.canonical.dbusmenu.GetProperty method.
 func (t *tray) GetProperty(id int32, name string) (value dbus.Variant, err *dbus.Error) {
-	// log.Printf("systray GetProperty '%s' for id: %d", name, id)
-	// defer log.Printf("systray GetProperty %s for id: %d - return %v, %v", name, id, value, err)
 	if m, ok := findLayout(id); ok {
 		instance.menuLock.RLock()
 		defer instance.menuLock.RUnlock()
@@ -94,9 +88,7 @@ func (t *tray) GetProperty(id int32, name string) (value dbus.Variant, err *dbus
 
 // Event is com.canonical.dbusmenu.Event method.
 func (t *tray) Event(id int32, eventID string, data dbus.Variant, timestamp uint32) (err *dbus.Error) {
-	// log.Printf("systray Event id: %d type: %s data: %v ts: %v", id, eventID, data, timestamp)
 	if eventID == "clicked" {
-		// log.Printf("systray clicked for id: %d", id)
 		menuItemsLock.RLock()
 		item, ok := menuItems[uint32(id)]
 		menuItemsLock.RUnlock()
@@ -119,7 +111,6 @@ func (t *tray) EventGroup(events []struct {
 }) (idErrors []int32, err *dbus.Error) {
 	for _, event := range events {
 		if event.V1 == "clicked" {
-			// log.Printf("systray clicked for id(s): %v", event.V0)
 			menuItemsLock.RLock()
 			item, ok := menuItems[uint32(event.V0)]
 			menuItemsLock.RUnlock()
@@ -136,13 +127,11 @@ func (t *tray) EventGroup(events []struct {
 
 // AboutToShow is com.canonical.dbusmenu.AboutToShow method.
 func (t *tray) AboutToShow(id int32) (needUpdate bool, err *dbus.Error) {
-	// log.Printf("systray AboutToShow %d", id)
 	return
 }
 
 // AboutToShowGroup is com.canonical.dbusmenu.AboutToShowGroup method.
 func (t *tray) AboutToShowGroup(ids []int32) (updatesNeeded []int32, idErrors []int32, err *dbus.Error) {
-	// log.Printf("systray AboutToShowGroup %v", ids)
 	return
 }
 
@@ -234,6 +223,7 @@ func addSeparator(id uint32) {
 func applyItemToLayout(in *MenuItem, out *menuLayout) {
 	instance.menuLock.Lock()
 	defer instance.menuLock.Unlock()
+	out.V1["type"] = dbus.MakeVariant("standard")
 	out.V1["enabled"] = dbus.MakeVariant(!in.disabled)
 	out.V1["label"] = dbus.MakeVariant(in.title)
 
@@ -316,6 +306,5 @@ func refresh() {
 		if err != nil {
 			log.Printf("systray error: failed to emit layout updated signal: %s\n", err)
 		}
-		// log.Printf("systay refresh LayoutUpdatedSignal, menu version: %d", version)
 	}
 }
