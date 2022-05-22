@@ -110,6 +110,11 @@ func Register(onReady func(), onExit func()) {
 	registerSystray()
 }
 
+// ResetMenu will remove all menu items
+func ResetMenu() {
+	resetMenu()
+}
+
 // Quit the systray
 func Quit() {
 	quitOnce.Do(quit)

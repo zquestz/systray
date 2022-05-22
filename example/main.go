@@ -17,10 +17,7 @@ func main() {
 	systray.Run(onReady, onExit)
 }
 
-func onReady() {
-	systray.SetTemplateIcon(icon.Data, icon.Data)
-	systray.SetTitle("Awesome App")
-	systray.SetTooltip("Lantern")
+func addQuitItem() {
 	mQuit := systray.AddMenuItem("Quit", "Quit the whole app")
 	mQuit.Enable()
 	go func() {
@@ -29,6 +26,13 @@ func onReady() {
 		systray.Quit()
 		fmt.Println("Finished quitting")
 	}()
+}
+
+func onReady() {
+	systray.SetTemplateIcon(icon.Data, icon.Data)
+	systray.SetTitle("Awesome App")
+	systray.SetTooltip("Lantern")
+	addQuitItem()
 
 	// We can manipulate the systray in other goroutines
 	go func() {
@@ -64,6 +68,7 @@ func onReady() {
 				shown = true
 			}
 		}
+		mReset := systray.AddMenuItem("Reset", "Reset all items")
 
 		for {
 			select {
@@ -84,12 +89,11 @@ func onReady() {
 				panic("panic button pressed")
 			case <-subMenuBottom.ClickedCh:
 				toggle()
+			case <- mReset.ClickedCh:
+				systray.ResetMenu()
+				addQuitItem()
 			case <-mToggle.ClickedCh:
 				toggle()
-			case <-mQuit.ClickedCh:
-				systray.Quit()
-				fmt.Println("Quit2 now...")
-				return
 			}
 		}
 	}()
