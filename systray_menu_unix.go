@@ -44,7 +44,7 @@ func (t *tray) GetLayout(parentID int32, recursionDepth int32, propertyNames []s
 		instance.menuLock.RLock()
 		defer instance.menuLock.RUnlock()
 		// return copy of menu layout to prevent panic from cuncurrent access to layout
-		return instance.menuVersion, *copyLayout(m, recursionDepth), nil
+		return atomic.LoadUint32(&instance.menuVersion), *copyLayout(m, recursionDepth), nil
 	}
 	return
 }
@@ -139,7 +139,7 @@ func createMenuPropSpec() map[string]map[string]*prop.Prop {
 	return map[string]map[string]*prop.Prop{
 		"com.canonical.dbusmenu": {
 			"Version": {
-				Value:    instance.menuVersion,
+				Value:    atomic.LoadUint32(&instance.menuVersion),
 				Writable: true,
 				Emit:     prop.EmitTrue,
 				Callback: nil,
