@@ -15,7 +15,7 @@ removing the GTK dependency and support for legacy linux system tray.
 ```go
 package main
 
-import "github.com/skycoin/systray"
+import "fyne.io/systray"
 
 func main() {
 	systray.Run(onReady, onExit)

@@ -89,7 +89,7 @@ func onReady() {
 				panic("panic button pressed")
 			case <-subMenuBottom.ClickedCh:
 				toggle()
-			case <- mReset.ClickedCh:
+			case <-mReset.ClickedCh:
 				systray.ResetMenu()
 				addQuitItem()
 			case <-mToggle.ClickedCh:
