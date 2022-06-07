@@ -19,6 +19,7 @@ func main() {
 
 func addQuitItem() {
 	mQuit := systray.AddMenuItem("Quit", "Quit the whole app")
+	mQuit.Enable()
 	go func() {
 		<-mQuit.ClickedCh
 		fmt.Println("Requesting quit")
@@ -88,7 +89,7 @@ func onReady() {
 				panic("panic button pressed")
 			case <-subMenuBottom.ClickedCh:
 				toggle()
-			case <- mReset.ClickedCh:
+			case <-mReset.ClickedCh:
 				systray.ResetMenu()
 				addQuitItem()
 			case <-mToggle.ClickedCh:
