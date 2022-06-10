@@ -282,7 +282,7 @@ func refresh() {
 	err := menu.Emit(instance.conn, &menu.Dbusmenu_LayoutUpdatedSignal{
 		Path: menuPath,
 		Body: &menu.Dbusmenu_LayoutUpdatedSignalBody{
-			Revision: version,
+			Revision: instance.menuVersion,
 		},
 	})
 	if err != nil {

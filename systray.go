@@ -230,7 +230,7 @@ func (item *MenuItem) update() {
 	addOrUpdateMenuItem(item)
 }
 
-func systrayMenuItemSelected(id uint32) { //nolint:deadcode,unused // TODO: Function is not being used.
+func systrayMenuItemSelected(id uint32) {
 	menuItemsLock.RLock()
 	item, ok := menuItems[id]
 	menuItemsLock.RUnlock()
