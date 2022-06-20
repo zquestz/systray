@@ -16,6 +16,7 @@ removing the GTK dependency and support for legacy linux system tray.
 package main
 
 import "fyne.io/systray"
+import "fyne.io/systray/example/icon"
 
 func main() {
 	systray.Run(onReady, onExit)
