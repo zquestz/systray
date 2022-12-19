@@ -203,6 +203,14 @@ NSMenuItem *find_menu_item(NSMenu *ourMenu, NSNumber *menuId) {
   }
 }
 
+- (void) remove_menu_item:(NSNumber*) menuId
+{
+  NSMenuItem* menuItem = find_menu_item(menu, menuId);
+  if (menuItem != NULL) {
+    [menuItem.menu removeItem:menuItem];     
+  }
+}
+
 - (void) reset_menu
 {
   [self->menu removeAllItems];
@@ -310,6 +318,11 @@ void add_separator(int menuId) {
 void hide_menu_item(int menuId) {
   NSNumber *mId = [NSNumber numberWithInt:menuId];
   runInMainThread(@selector(hide_menu_item:), (id)mId);
+}
+
+void remove_menu_item(int menuId) {
+  NSNumber *mId = [NSNumber numberWithInt:menuId];
+  runInMainThread(@selector(remove_menu_item:), (id)mId);
 }
 
 void show_menu_item(int menuId) {
