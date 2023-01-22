@@ -951,6 +951,13 @@ func quit() {
 		0,
 		0,
 	)
+
+	wt.muNID.Lock()
+	if wt.nid != nil {
+		wt.nid.delete()
+	}
+	wt.muNID.Unlock()
+	systrayExit()
 }
 
 func setInternalLoop(bool) {
