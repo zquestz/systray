@@ -324,7 +324,10 @@ func (t *winTray) wndProc(hWnd windows.Handle, message uint32, wParam, lParam ui
 			t.nid.delete()
 		}
 		t.muNID.Unlock()
-		systrayExit()
+		if !systrayExitCalled {
+			systrayExitCalled = true
+			systrayExit()
+		}
 	case t.wmSystrayMessage:
 		switch lParam {
 		case WM_RBUTTONUP, WM_LBUTTONUP:
@@ -957,7 +960,10 @@ func quit() {
 		wt.nid.delete()
 	}
 	wt.muNID.Unlock()
-	systrayExit()
+	if !systrayExitCalled {
+		systrayExitCalled = true
+		systrayExit()
+	}
 }
 
 func setInternalLoop(bool) {

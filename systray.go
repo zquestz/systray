@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	systrayReady  func()
-	systrayExit   func()
-	menuItems     = make(map[uint32]*MenuItem)
-	menuItemsLock sync.RWMutex
+	systrayReady      func()
+	systrayExit       func()
+	systrayExitCalled bool
+	menuItems         = make(map[uint32]*MenuItem)
+	menuItemsLock     sync.RWMutex
 
 	currentID = uint32(0)
 	quitOnce  sync.Once
@@ -111,6 +112,7 @@ func Register(onReady func(), onExit func()) {
 		onExit = func() {}
 	}
 	systrayExit = onExit
+	systrayExitCalled = false
 	registerSystray()
 }
 

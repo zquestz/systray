@@ -18,6 +18,7 @@ const iconFilePath = "example/icon/iconwin.ico"
 func TestBaseWindowsTray(t *testing.T) {
 	systrayReady = func() {}
 	systrayExit = func() {}
+	systrayExitCalled = false
 
 	runtime.LockOSThread()
 
