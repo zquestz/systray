@@ -144,7 +144,7 @@ func systray_ready() {
 
 //export systray_on_exit
 func systray_on_exit() {
-	systrayExit()
+	runSystrayExit()
 }
 
 //export systray_menu_item_selected

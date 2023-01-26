@@ -10,14 +10,24 @@ import (
 )
 
 var (
-	systrayReady  func()
-	systrayExit   func()
-	menuItems     = make(map[uint32]*MenuItem)
-	menuItemsLock sync.RWMutex
+	systrayReady      func()
+	systrayExit       func()
+	systrayExitCalled bool
+	menuItems         = make(map[uint32]*MenuItem)
+	menuItemsLock     sync.RWMutex
 
 	currentID = uint32(0)
 	quitOnce  sync.Once
 )
+
+// This helper function allows us to call systrayExit only once,
+// without accidentally calling it twice in the same lifetime.
+func runSystrayExit() {
+	if !systrayExitCalled {
+		systrayExitCalled = true
+		systrayExit()
+	}
+}
 
 func init() {
 	runtime.LockOSThread()
@@ -111,6 +121,7 @@ func Register(onReady func(), onExit func()) {
 		onExit = func() {}
 	}
 	systrayExit = onExit
+	systrayExitCalled = false
 	registerSystray()
 }
 
