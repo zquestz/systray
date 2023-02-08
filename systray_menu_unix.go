@@ -197,7 +197,7 @@ func addOrUpdateMenuItem(item *MenuItem) {
 	}
 }
 
-func addSeparator(id uint32) {
+func addSeparator(id uint32, parent uint32) {
 	instance.menuLock.Lock()
 	defer instance.menuLock.Unlock()
 	layout := &menuLayout{
