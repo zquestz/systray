@@ -26,6 +26,7 @@ func addQuitItem() {
 		systray.Quit()
 		fmt.Println("Finished quitting")
 	}()
+	systray.AddSeparator()
 }
 
 func onReady() {
