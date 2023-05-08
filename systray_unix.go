@@ -164,18 +164,18 @@ func quit() {
 
 func nativeStart() {
 	systrayReady()
-	conn, _ := dbus.ConnectSessionBus()
-	if conn == nil {
-		log.Printf("systray error: failed to connect to DBus")
+	conn, err := dbus.SessionBus()
+	if err != nil {
+		log.Printf("systray error: failed to connect to DBus: %v\n", err)
 		return
 	}
-	err := notifier.ExportStatusNotifierItem(conn, path, &notifier.UnimplementedStatusNotifierItem{})
+	err = notifier.ExportStatusNotifierItem(conn, path, &notifier.UnimplementedStatusNotifierItem{})
 	if err != nil {
-		log.Printf("systray error: failed to export status notifier item: %s\n", err)
+		log.Printf("systray error: failed to export status notifier item: %v\n", err)
 	}
 	err = menu.ExportDbusmenu(conn, menuPath, instance)
 	if err != nil {
-		log.Printf("systray error: failed to export status notifier item: %s\n", err)
+		log.Printf("systray error: failed to export status notifier menu: %v\n", err)
 		return
 	}
 
