@@ -265,6 +265,10 @@ func stayRegistered() {
 	for {
 		select {
 		case sig := <-sc:
+			if sig == nil {
+				return // We get a nil signal when closing the window.
+			}
+
 			// sig.Body has the args, which are [name old_owner new_owner]
 			if sig.Body[2] != "" {
 				register()
