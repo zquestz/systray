@@ -267,10 +267,12 @@ func stayRegistered() {
 		case sig := <-sc:
 			if sig == nil {
 				return // We get a nil signal when closing the window.
+			} else if len(sig.Body) < 3 {
+				return // malformed signal?
 			}
 
 			// sig.Body has the args, which are [name old_owner new_owner]
-			if sig.Body[2] != "" {
+			if s, ok := sig.Body[2].(string); ok && s != "" {
 				register()
 			}
 		case <-quitChan:
