@@ -16,7 +16,7 @@ var (
 	menuItems         = make(map[uint32]*MenuItem)
 	menuItemsLock     sync.RWMutex
 
-	currentID = uint32(0)
+	currentID atomic.Uint32
 	quitOnce  sync.Once
 )
 
@@ -66,7 +66,7 @@ func (item *MenuItem) String() string {
 func newMenuItem(title string, tooltip string, parent *MenuItem) *MenuItem {
 	return &MenuItem{
 		ClickedCh:   make(chan struct{}),
-		id:          atomic.AddUint32(&currentID, 1),
+		id:          currentID.Add(1),
 		title:       title,
 		tooltip:     tooltip,
 		disabled:    false,
@@ -157,12 +157,12 @@ func AddMenuItemCheckbox(title string, tooltip string, checked bool) *MenuItem {
 
 // AddSeparator adds a separator bar to the menu
 func AddSeparator() {
-	addSeparator(atomic.AddUint32(&currentID, 1), 0)
+	addSeparator(currentID.Add(1), 0)
 }
 
 // AddSeparator adds a separator bar to the submenu
 func (item *MenuItem) AddSeparator() {
-	addSeparator(atomic.AddUint32(&currentID, 1), item.id)
+	addSeparator(currentID.Add(1), item.id)
 }
 
 // AddSubMenuItem adds a nested sub-menu item with the designated title and tooltip.
