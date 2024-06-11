@@ -265,13 +265,6 @@ func (item *MenuItem) Uncheck() {
 // update propagates changes on a menu item to systray
 func (item *MenuItem) update() {
 	menuItemsLock.Lock()
-	if v, ok := menuItems[item.id]; ok {
-		select {
-		case <-v.ClickedCh:
-		default:
-		}
-		close(v.ClickedCh)
-	}
 	menuItems[item.id] = item
 	menuItemsLock.Unlock()
 	addOrUpdateMenuItem(item)
