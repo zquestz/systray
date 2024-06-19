@@ -70,7 +70,6 @@ withParentMenuId: (int)theParentMenuId
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-  NSLog(@"inside appdidfinishlaunching") ;
   self->statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
 
   self->menu = [[NSMenu alloc] init];
@@ -114,13 +113,11 @@ withParentMenuId: (int)theParentMenuId
 
 - (IBAction)menuHandler:(id)sender
 {
-  NSLog(@"Menu hit.");
   NSNumber* menuId = [sender representedObject];
   systray_menu_item_selected(menuId.intValue);
 }
 
 - (void)menuWillOpen:(NSMenu *)menu {
-  NSLog(@"menuWillOpen hit.");
   systray_menu_will_open();
 }
 
