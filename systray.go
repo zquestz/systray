@@ -18,10 +18,8 @@ var (
 
 	currentID atomic.Uint32
 	quitOnce  sync.Once
-)
 
-var (
-	// TrayOpenedCh is the channel which will be notified when system tray is shown. Only works on Linux and Windows.
+	// TrayOpenedCh receives an entry each time the system tray menu is opened.
 	TrayOpenedCh = make(chan struct{})
 )
 
