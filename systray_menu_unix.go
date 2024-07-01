@@ -94,8 +94,20 @@ func (t *tray) GetProperty(id int32, name string) (value dbus.Variant, err *dbus
 
 // Event is com.canonical.dbusmenu.Event method.
 func (t *tray) Event(id int32, eventID string, data dbus.Variant, timestamp uint32) (err *dbus.Error) {
-	if eventID == "clicked" {
+	switch eventID {
+	case "clicked":
 		systrayMenuItemSelected(uint32(id))
+	case "opened":
+		t.menuLock.RLock()
+		rootMenuID := t.menu.V0
+		t.menuLock.RUnlock()
+
+		if id == rootMenuID {
+			select {
+			case TrayOpenedCh <- struct{}{}:
+			default:
+			}
+		}
 	}
 	return
 }

@@ -52,9 +52,10 @@ withParentMenuId: (int)theParentMenuId
 }
 @end
 
-@interface AppDelegate: NSObject <NSApplicationDelegate>
+@interface AppDelegate: NSObject <NSApplicationDelegate, NSMenuDelegate>
   - (void) add_or_update_menu_item:(MenuItem*) item;
   - (IBAction)menuHandler:(id)sender;
+  - (void)menuWillOpen:(NSMenu*)menu;
   @property (assign) IBOutlet NSWindow *window;
   @end
 
@@ -70,9 +71,11 @@ withParentMenuId: (int)theParentMenuId
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
   self->statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
+
   self->menu = [[NSMenu alloc] init];
-  [self->menu setAutoenablesItems: FALSE];
-  [self->statusItem setMenu:self->menu];
+  self->menu.delegate = self;
+  self->menu.autoenablesItems = FALSE;
+  self->statusItem.menu = self->menu;
   systray_ready();
 }
 
@@ -91,7 +94,7 @@ withParentMenuId: (int)theParentMenuId
   [self updateTitleButtonStyle];
 }
 
--(void)updateTitleButtonStyle {
+- (void)updateTitleButtonStyle {
   if (statusItem.button.image != nil) {
     if ([statusItem.button.title length] == 0) {
       statusItem.button.imagePosition = NSImageOnly;
@@ -114,6 +117,10 @@ withParentMenuId: (int)theParentMenuId
   systray_menu_item_selected(menuId.intValue);
 }
 
+- (void)menuWillOpen:(NSMenu *)menu {
+  systray_menu_will_open();
+}
+
 - (void)add_or_update_menu_item:(MenuItem *)item {
   NSMenu *theMenu = self->menu;
   NSMenuItem *parentItem;
@@ -127,9 +134,8 @@ withParentMenuId: (int)theParentMenuId
       [parentItem setSubmenu:theMenu];
     }
   }
-  
-  NSMenuItem *menuItem;
-  menuItem = find_menu_item(theMenu, item->menuId);
+
+  NSMenuItem *menuItem = find_menu_item(theMenu, item->menuId);
   if (menuItem == NULL) {
     menuItem = [theMenu addItemWithTitle:item->title
                                action:@selector(menuHandler:)
@@ -216,7 +222,7 @@ NSMenuItem *find_menu_item(NSMenu *ourMenu, NSNumber *menuId) {
 {
   NSMenuItem* menuItem = find_menu_item(menu, menuId);
   if (menuItem != NULL) {
-    [menuItem.menu removeItem:menuItem];     
+    [menuItem.menu removeItem:menuItem];
   }
 }
 

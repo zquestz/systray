@@ -18,6 +18,9 @@ var (
 
 	currentID atomic.Uint32
 	quitOnce  sync.Once
+
+	// TrayOpenedCh receives an entry each time the system tray menu is opened.
+	TrayOpenedCh = make(chan struct{})
 )
 
 // This helper function allows us to call systrayExit only once,
