@@ -12,6 +12,7 @@ import (
 var (
 	systrayReady      func()
 	systrayExit       func()
+	activateFunc      func()
 	systrayExitCalled bool
 	menuItems         = make(map[uint32]*MenuItem)
 	menuItemsLock     sync.RWMutex
@@ -34,6 +35,10 @@ func runSystrayExit() {
 
 func init() {
 	runtime.LockOSThread()
+}
+
+func SetActivateFunc(f func()) {
+	activateFunc = f
 }
 
 // MenuItem is used to keep track each menu item of systray.

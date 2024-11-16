@@ -169,7 +169,8 @@ func nativeStart() {
 		log.Printf("systray error: failed to connect to DBus: %v\n", err)
 		return
 	}
-	err = notifier.ExportStatusNotifierItem(conn, path, &notifier.UnimplementedStatusNotifierItem{})
+	customStatusItem := NewCustomStatusNotifierItem(conn.BusObject())
+	err = notifier.ExportStatusNotifierItem(conn, path, customStatusItem)
 	if err != nil {
 		log.Printf("systray error: failed to export status notifier item: %v\n", err)
 	}
