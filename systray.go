@@ -232,6 +232,17 @@ func (item *MenuItem) Hide() {
 
 // Remove removes a menu item
 func (item *MenuItem) Remove() {
+	menuItemsLock.RLock()
+	childList := make([]*MenuItem, 0, len(menuItems))
+	for _, child := range menuItems {
+		if child.parent == item {
+			childList = append(childList, child)
+		}
+	}
+	menuItemsLock.RUnlock()
+	for _, child := range childList {
+		child.Remove()
+	}
 	removeMenuItem(item)
 	menuItemsLock.Lock()
 	delete(menuItems, item.id)
