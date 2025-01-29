@@ -134,7 +134,7 @@ func ResetMenu() {
 	id := currentID.Load()
 	menuItemsLock.Unlock()
 	for i, item := range menuItems {
-		if i < id {
+		if i < id && item.parent == nil {
 			item.Remove()
 		}
 	}
