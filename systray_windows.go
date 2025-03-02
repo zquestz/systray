@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -999,6 +1000,16 @@ func SetIcon(iconBytes []byte) {
 	}
 }
 
+// SetIconFromFilePath sets the systray icon from a file path.
+// iconFilePath should be the path to a .ico for windows and .ico/.jpg/.png for other platforms.
+func SetIconFromFilePath(iconFilePath string) error {
+	err := wt.setIcon(iconFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to set icon: %v", err)
+	}
+	return nil
+}
+
 // SetTemplateIcon sets the systray icon as a template icon (on macOS), falling back
 // to a regular icon on other platforms.
 // templateIconBytes and iconBytes should be the content of .ico for windows and
@@ -1028,16 +1039,24 @@ func (item *MenuItem) SetIcon(iconBytes []byte) {
 		return
 	}
 
+	err = item.SetIconFromFilePath(iconFilePath)
+	if err != nil {
+		log.Printf("systray error: %s\n", err)
+		return
+	}
+}
+
+// SetIconFromFilePath sets the icon of a menu item from a file path.
+// iconFilePath should be the path to a .ico for windows and .ico/.jpg/.png for other platforms.
+func (item *MenuItem) SetIconFromFilePath(iconFilePath string) error {
 	h, err := wt.loadIconFrom(iconFilePath)
 	if err != nil {
-		log.Printf("systray error: unable to load icon from temp file: %s\n", err)
-		return
+		return fmt.Errorf("unable to load icon from file: %s", err)
 	}
 
 	h, err = iconToBitmap(h)
 	if err != nil {
-		log.Printf("systray error: unable to convert icon to bitmap: %s\n", err)
-		return
+		return fmt.Errorf("unable to convert icon to bitmap: %s", err)
 	}
 	wt.muMenuItemIcons.Lock()
 	wt.menuItemIcons[uint32(item.id)] = h
@@ -1045,9 +1064,9 @@ func (item *MenuItem) SetIcon(iconBytes []byte) {
 
 	err = wt.addOrUpdateMenuItem(uint32(item.id), item.parentId(), item.title, item.disabled, item.checked)
 	if err != nil {
-		log.Printf("systray error: unable to addOrUpdateMenuItem: %s\n", err)
-		return
+		return fmt.Errorf("unable to addOrUpdateMenuItem: %s", err)
 	}
+	return nil
 }
 
 // SetTooltip sets the systray tooltip to display on mouse hover of the tray icon,
